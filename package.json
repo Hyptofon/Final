@@ -11,16 +11,17 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/ui": "^3.0.2",
+    "@nuxt/ui": "^3.1.1",
     "@nuxtjs/google-fonts": "^3.2.0",
     "@pinia/nuxt": "0.11.0",
+    "@vue/compiler-sfc": "^3.3.11",
     "@vueuse/nuxt": "13.1.0",
     "floating-vue": "^5.2.2",
     "nuxt": "^3.16.2",
     "nuxt-vue3-google-signin": "^0.0.11",
     "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.2.0",
-    "vue": "latest"
+    "vue": "^3.3.11"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.2",
