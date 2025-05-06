@@ -1,251 +1,217 @@
-<script lang="ts" setup>
-// Columns
-const columns = [{
-  key: 'id',
-  label: '#',
-  sortable: true
-}, {
-  key: 'title',
-  label: 'Title',
-  sortable: true
-}, {
-  key: 'completed',
-  label: 'Status',
-  sortable: true
-}, {
-  key: 'actions',
-  label: 'Actions',
-  sortable: false
-}]
-
-const selectedColumns = ref(columns)
-const columnsTable = computed(() => columns.filter((column) => selectedColumns.value.includes(column)))
-
-// Selected Rows
-const selectedRows = ref([])
-
-function select (row) {
-  const index = selectedRows.value.findIndex((item) => item.id === row.id)
-  if (index === -1) {
-    selectedRows.value.push(row)
-  } else {
-    selectedRows.value.splice(index, 1)
-  }
-}
-
-// Actions
-const actions = [
-  [{
-    key: 'completed',
-    label: 'Completed',
-    icon: 'i-heroicons-check'
-  }], [{
-    key: 'uncompleted',
-    label: 'In Progress',
-    icon: 'i-heroicons-arrow-path'
-  }]
-]
-
-// Filters
-const todoStatus = [{
-  key: 'uncompleted',
-  label: 'In Progress',
-  value: false
-}, {
-  key: 'completed',
-  label: 'Completed',
-  value: true
-}]
-
-const search = ref('')
-const selectedStatus = ref([])
-const searchStatus = computed(() => {
-  if (selectedStatus.value?.length === 0) {
-    return ''
-  }
-
-  if (selectedStatus?.value?.length > 1) {
-    return `?completed=${selectedStatus.value[0].value}&completed=${selectedStatus.value[1].value}`
-  }
-
-  return `?completed=${selectedStatus.value[0].value}`
-})
-
-const resetFilters = () => {
-  search.value = ''
-  selectedStatus.value = []
-}
-
-// Pagination
-const sort = ref({ column: 'id', direction: 'asc' as const })
-const page = ref(1)
-const pageCount = ref(10)
-const pageTotal = ref(200) // This value should be dynamic coming from the API
-const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1)
-const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value))
-
-// Data
-const { data: todos, pending } = await useLazyAsyncData<{
-  id: number
-  title: string
-  completed: string
-}[]>('todos', () => ($fetch as any)(`https://jsonplaceholder.typicode.com/todos${searchStatus.value}`, {
-  query: {
-    q: search.value,
-    '_page': page.value,
-    '_limit': pageCount.value,
-    '_sort': sort.value.column,
-    '_order': sort.value.direction
-  }
-}), {
-  default: () => [],
-  watch: [page, search, searchStatus, pageCount, sort]
-})
-</script>
-
 <template>
-  <UCard
-      class="w-full"
-      :ui="{
-      base: '',
-      ring: '',
-      divide: 'divide-y divide-gray-200 dark:divide-gray-700',
-      header: { padding: 'px-4 py-5' },
-      body: { padding: '', base: 'divide-y divide-gray-200 dark:divide-gray-700' },
-      footer: { padding: 'p-4' }
-    }"
-  >
-    <template #header>
-      <h2 class="font-semibold text-xl text-gray-900 dark:text-white leading-tight">
-        Archive
-      </h2>
-    </template>
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-6">Archive</h1>
 
-    <!-- Filters -->
-    <div class="flex items-center justify-between gap-3 px-4 py-3">
-      <UInput v-model="search" icon="i-heroicons-magnifying-glass-20-solid" placeholder="Search..." />
-
-      <USelectMenu v-model="selectedStatus" :options="todoStatus" multiple placeholder="Status" class="w-40" />
+    <!-- Пошук та фільтр по статусу -->
+    <div class="flex space-x-2 mb-4">
+      <input
+          v-model="search"
+          placeholder="Search archived..."
+          class="flex-1 border rounded px-3 py-2"
+      />
+      <select v-model="filterStatus" class="border rounded px-3 py-2">
+        <option value="all">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="pending">Pending</option>
+        <option value="completed">Completed</option>
+      </select>
     </div>
 
-    <!-- Header and Action buttons -->
-    <div class="flex justify-between items-center w-full px-4 py-3">
-      <div class="flex items-center gap-1.5">
-        <span class="text-sm leading-5">Rows per page:</span>
-
-        <USelect
-            v-model="pageCount"
-            :options="[3, 5, 10, 20, 30, 40]"
-            class="me-2 w-20"
-            size="xs"
-        />
-      </div>
-
-      <div class="flex gap-1.5 items-center">
-        <UDropdownMenu v-if="selectedRows.length > 1" :items="actions" :ui="{ width: 'w-36' }">
-          <UButton
-              icon="i-heroicons-chevron-down"
-              trailing
-              color="gray"
-              size="xs"
-          >
-            Mark as
-          </UButton>
-        </UDropdownMenu>
-
-        <USelectMenu v-model="selectedColumns" :options="columns" multiple>
-          <UButton
-              icon="i-heroicons-view-columns"
-              color="gray"
-              size="xs"
-          >
-            Columns
-          </UButton>
-        </USelectMenu>
-
-        <UButton
-            icon="i-heroicons-funnel"
-            color="gray"
-            size="xs"
-            :disabled="search === '' && selectedStatus.length === 0"
-            @click="resetFilters"
-        >
-          Reset
-        </UButton>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <UTable
-        v-model="selectedRows"
-        v-model:sort="sort"
-        :rows="todos"
-        :columns="columnsTable"
-        :loading="pending"
-        sort-asc-icon="i-heroicons-arrow-up"
-        sort-desc-icon="i-heroicons-arrow-down"
-        sort-mode="manual"
-        class="w-full"
-        :ui="{ td: { base: 'max-w-[0] truncate' }, default: { checkbox: { color: 'gray' } } }"
-        @select="select"
-    >
-      <template #completed-data="{ row }">
-        <UBadge size="xs" :label="row.completed ? 'Completed' : 'In Progress'" :color="row.completed ? 'emerald' : 'orange'" variant="subtle" />
-      </template>
-
-      <template #actions-data="{ row }">
-        <UButton
-            v-if="!row.completed"
-            icon="i-heroicons-check"
-            size="2xs"
-            color="emerald"
-            variant="outline"
-            :ui="{ rounded: 'rounded-full' }"
-            square
-        />
-
-        <UButton
-            v-else
-            icon="i-heroicons-arrow-path"
-            size="2xs"
-            color="orange"
-            variant="outline"
-            :ui="{ rounded: 'rounded-full' }"
-            square
-        />
-      </template>
-    </UTable>
-
-    <!-- Number of rows & Pagination -->
-    <template #footer>
-      <div class="flex flex-wrap justify-between items-center">
-        <div>
-          <span class="text-sm leading-5">
-            Showing
-            <span class="font-medium">{{ pageFrom }}</span>
-            to
-            <span class="font-medium">{{ pageTo }}</span>
-            of
-            <span class="font-medium">{{ pageTotal }}</span>
-            results
+    <!-- Сортування та керування сторінками -->
+    <div class="flex justify-between mb-4">
+      <div>
+        <button @click="sortBy('title')" class="px-3 py-2 border rounded mr-2">
+          Sort by Title
+          <span v-if="sortField === 'title'">
+            {{ sortDirection === 'asc' ? '↑' : '↓' }}
           </span>
-        </div>
-
-        <UPagination
-            v-model="page"
-            :page-count="pageCount"
-            :total="pageTotal"
-            :ui="{
-            wrapper: 'flex items-center gap-1',
-            rounded: '!rounded-full min-w-[32px] justify-center',
-            default: {
-              activeButton: {
-                variant: 'outline'
-              }
-            }
-          }"
-        />
+        </button>
+        <button @click="sortBy('createdAt')" class="px-3 py-2 border rounded">
+          Sort by Date
+          <span v-if="sortField === 'createdAt'">
+            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+          </span>
+        </button>
       </div>
-    </template>
-  </UCard>
+      <div class="flex items-center space-x-2">
+        <span>Rows per page:</span>
+        <select v-model.number="pageSize" class="border rounded px-2 py-1">
+          <option v-for="n in [5,10,20,50]" :key="n" :value="n">{{ n }}</option>
+        </select>
+        <button @click="resetFilters" class="px-3 py-2 border rounded">Reset</button>
+      </div>
+    </div>
+
+    <!-- Таблиця архівованих -->
+    <table class="min-w-full bg-white border">
+      <thead>
+      <tr>
+        <th class="py-2 px-4 border">Title</th>
+        <th class="py-2 px-4 border">Content</th>
+        <th class="py-2 px-4 border">Status</th>
+        <th class="py-2 px-4 border">Created</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <DocumentItem
+          v-for="doc in paginated"
+          :key="doc.id"
+          :document="doc"
+          @unarchive="onUnarchiveRequested"
+          @delete="onDeleteRequested"
+          @restore="onRestoreRequested"
+      />
+      <tr v-if="paginated.length === 0">
+        <td colspan="5" class="py-4 text-center text-gray-500">
+          No archived documents found
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Пагінація -->
+    <div class="flex justify-between items-center mt-4">
+      <div>
+        Showing {{ start + 1 }} – {{ start + paginated.length }} of {{ filtered.length }}
+      </div>
+      <div class="space-x-2">
+        <button
+            @click="page--"
+            :disabled="page === 1"
+            class="px-3 py-1 border rounded"
+        >Prev</button>
+        <button
+            @click="page++"
+            :disabled="page === totalPages"
+            class="px-3 py-1 border rounded"
+        >Next</button>
+      </div>
+    </div>
+
+    <!-- ConfirmDialog -->
+    <ConfirmDialog
+        :visible="confirmVisible"
+        :message="confirmMessage"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
+  </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useDocumentStore, type Document } from '~/composables/useDocumentStore'
+import DocumentItem from '~/components/Document/DocumentItem.vue'
+import ConfirmDialog from '~/components/Interface/ConfirmDialog.vue'
+
+// --- ConfirmDialog state & helpers ---
+const confirmVisible = ref(false)
+const confirmMessage = ref('')
+let pendingAction: (() => void) | null = null
+
+function showConfirm(message: string, action: () => void) {
+  confirmMessage.value = message
+  pendingAction = action
+  confirmVisible.value = true
+}
+function onDialogConfirm() {
+  confirmVisible.value = false
+  pendingAction?.()
+  pendingAction = null
+}
+function onDialogCancel() {
+  confirmVisible.value = false
+  pendingAction = null
+}
+
+// --- Store initialization ---
+const {
+  documents,
+  loadDocuments,
+  checkAutoArchive,
+  cleanupArchive,
+  unarchiveDocument,
+  deleteDocument,
+  restoreDocument
+} = useDocumentStore()
+
+// --- Confirmation wrappers ---
+function onUnarchiveRequested(id: number) {
+  showConfirm('Ви впевнені, що хочете розархівувати документ?', () => unarchiveDocument(id))
+}
+function onDeleteRequested(id: number) {
+  showConfirm('Ви впевнені, що хочете видалити документ?', () => deleteDocument(id))
+}
+function onRestoreRequested(id: number) {
+  showConfirm('Ви впевнені, що хочете відновити документ?', () => restoreDocument(id))
+}
+
+// --- Filter, sort & pagination state ---
+const search = ref('')
+const filterStatus = ref<'all'|'active'|'pending'|'completed'>('all')
+
+const sortField = ref<'title'|'createdAt'>('createdAt')
+const sortDirection = ref<'asc'|'desc'>('desc')
+
+const page = ref(1)
+const pageSize = ref(10)
+
+onMounted(() => {
+  loadDocuments()
+  checkAutoArchive()
+  setInterval(() => {
+    checkAutoArchive()
+    cleanupArchive()
+  }, 3600000)
+})
+
+// --- Computed lists ---
+const filtered = computed(() => {
+  let list = documents.value.filter(d => d.isArchived && !d.isDeleted)
+  if (search.value) {
+    const q = search.value.toLowerCase()
+    list = list.filter(d =>
+        d.title.toLowerCase().includes(q) ||
+        d.content.toLowerCase().includes(q)
+    )
+  }
+  if (filterStatus.value !== 'all') {
+    list = list.filter(d => d.status === filterStatus.value)
+  }
+  return list
+})
+
+const sorted = computed(() =>
+    [...filtered.value].sort((a, b) => {
+      let A: any = a[sortField.value], B: any = b[sortField.value]
+      if (sortField.value === 'createdAt') {
+        A = new Date(A); B = new Date(B)
+      }
+      return sortDirection.value === 'asc' ? (A > B ? 1 : -1) : (A < B ? 1 : -1)
+    })
+)
+
+const start = computed(() => (page.value - 1) * pageSize.value)
+const paginated = computed(() =>
+    sorted.value.slice(start.value, start.value + pageSize.value)
+)
+const totalPages = computed(() =>
+    Math.ceil(filtered.value.length / pageSize.value)
+)
+
+// --- Helpers ---
+function sortBy(field: 'title'|'createdAt') {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortDirection.value = 'asc'
+  }
+}
+function resetFilters() {
+  search.value = ''
+  filterStatus.value = 'all'
+  page.value = 1
+}
+</script>

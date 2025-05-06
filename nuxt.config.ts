@@ -6,6 +6,9 @@ export default defineNuxtConfig({
       apiBase: 'https://umsystem-documents.azurewebsites.net/', // can be overridden by NUXT_PUBLIC_API_BASE environment variable
     }
   },
+  plugins: [
+    '~/plugins/toastification.ts',
+  ],
   //ssr: false,
   devtools: { enabled: true },
   colorMode: {
@@ -56,6 +59,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [
       //tailwindcss(),
+
     ],
   },
   googleFonts: {
