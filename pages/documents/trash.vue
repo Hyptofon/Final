@@ -3,8 +3,8 @@
     <div class="container mx-auto p-6">
       <!-- Header -->
       <header class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Archive</h1>
-        <p class="text-gray-600">View and manage your archived documents</p>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Trash</h1>
+        <p class="text-gray-600">Documents pending permanent deletion</p>
       </header>
 
       <!-- Tabs -->
@@ -12,10 +12,10 @@
         <NuxtLink to="/documents" class="px-6 py-3 text-gray-600 hover:text-blue-600">
           All Documents
         </NuxtLink>
-        <NuxtLink to="/documents/archive" class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-medium -mb-px">
+        <NuxtLink to="/documents/archive" class="px-6 py-3 text-gray-600 hover:text-blue-600">
           Archive
         </NuxtLink>
-        <NuxtLink to="/documents/trash" class="px-6 py-3 text-gray-600 hover:text-blue-600">
+        <NuxtLink to="/documents/trash" class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-medium -mb-px">
           Trash
         </NuxtLink>
       </div>
@@ -25,7 +25,7 @@
         <div class="relative flex-1 min-w-[240px]">
           <input
               v-model="search"
-              placeholder="Search archived documents..."
+              placeholder="Search trash..."
               class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
           <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -45,7 +45,7 @@
         </select>
       </div>
 
-      <!-- Sort Controls -->
+      <!-- Sort controls -->
       <div class="flex justify-between mb-6 flex-wrap gap-3">
         <div class="flex gap-2">
           <button
@@ -89,72 +89,27 @@
         </div>
       </div>
 
-      <!-- Bulk Actions -->
-      <div
-          v-if="selectedIds.length > 0"
-          class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between animate-fadeIn"
-      >
-        <span class="text-blue-700 font-medium">{{ selectedIds.length }} document(s) selected</span>
-        <div class="flex gap-2">
-          <button
-              @click="bulkUnarchive"
-              class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-1"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-            </svg>
-            Unarchive Selected
-          </button>
-          <button
-              @click="bulkDelete"
-              class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all flex items-center gap-1"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete Selected
-          </button>
-        </div>
-      </div>
-
-      <!-- Archive table -->
+      <!-- Trash table -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="w-12 px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    @change="toggleSelectAll"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-              </th>
               <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
               <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
               <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-              <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Archived</th>
               <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="doc in paginated" :key="doc.id" class="bg-amber-50 hover:bg-amber-100 transition-colors">
-              <td class="px-3 py-4 whitespace-nowrap">
-                <input
-                    type="checkbox"
-                    :checked="selectedIds.includes(doc.id)"
-                    @change="toggleSelect(doc.id)"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-              </td>
+            <tr v-for="doc in paginated" :key="doc.id" class="bg-red-50 hover:bg-red-100 transition-colors">
               <td class="px-3 py-4">
                 <div class="text-sm font-medium text-gray-900">{{ doc.title }}</div>
               </td>
               <td class="px-3 py-4">
                 <div class="text-sm text-gray-500 max-w-xs truncate">
-                  <span>{{ doc.content }} <span v-if="doc.compressed" class="text-xs text-amber-600 font-medium ml-1">[compressed]</span></span>
+                  <span>{{ doc.content }} <span v-if="doc.compressed" class="text-xs text-red-600 font-medium ml-1">[compressed]</span></span>
                 </div>
               </td>
               <td class="px-3 py-4 whitespace-nowrap">
@@ -172,40 +127,26 @@
               <td class="px-3 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">{{ formatDate(doc.createdAt) }}</div>
               </td>
-              <td class="px-3 py-4 whitespace-nowrap">
-                <div class="text-sm text-amber-600 font-medium">{{ formatDate(doc.archivedAt || '') }}</div>
-              </td>
               <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex gap-2">
-                  <button
-                      @click="onUnarchiveRequested(doc.id)"
-                      class="text-blue-600 hover:text-blue-900 transition-colors"
-                      title="Unarchive"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                    </svg>
-                  </button>
-                  <button
-                      @click="onDeleteRequested(doc.id)"
-                      class="text-red-600 hover:text-red-900 transition-colors"
-                      title="Delete"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
+                <button
+                    @click="onRestoreRequested(doc.id)"
+                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                  Restore
+                </button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="7" class="px-3 py-8 text-center text-gray-500">
+              <td colspan="5" class="px-3 py-8 text-center text-gray-500">
                 <div class="flex flex-col items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  <p class="text-lg font-medium">No archived documents found</p>
-                  <p class="text-sm">Documents you archive will appear here</p>
+                  <p class="text-lg font-medium">No documents in trash</p>
+                  <p class="text-sm">Deleted documents will appear here</p>
                 </div>
               </td>
             </tr>
@@ -245,11 +186,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useDocumentStore, type Document } from '~/composables/useDocumentStore'
+import { ref, computed, onMounted } from 'vue'
+import { useDocumentStore } from '~/composables/useDocumentStore'
 import ConfirmDialog from '~/components/Interface/ConfirmDialog.vue'
 import { useToast } from 'vue-toastification'
-import { onMounted, onUnmounted } from 'vue';
 
 // Toast notifications
 const toast = useToast()
@@ -280,66 +220,8 @@ function onDialogCancel() {
 const {
   documents,
   loadDocuments,
-  unarchiveDocument,
-  deleteDocument,
-  checkAutoArchive,
-  cleanupArchive
+  restoreDocument
 } = useDocumentStore()
-
-// --- Document selection state ---
-const selectedIds = ref<number[]>([])
-
-function toggleSelect(id: number) {
-  const index = selectedIds.value.indexOf(id)
-  if (index === -1) {
-    selectedIds.value.push(id)
-  } else {
-    selectedIds.value.splice(index, 1)
-  }
-}
-
-const isAllSelected = computed(() => {
-  return filtered.value.length > 0 && selectedIds.value.length === filtered.value.length
-})
-
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    selectedIds.value = []
-  } else {
-    selectedIds.value = filtered.value.map(doc => doc.id)
-  }
-}
-
-function bulkUnarchive() {
-  showConfirm(`Unarchive ${selectedIds.value.length} selected documents?`, () => {
-    selectedIds.value.forEach(id => unarchiveDocument(id))
-    toast.success(`${selectedIds.value.length} documents unarchived`)
-    selectedIds.value = []
-  })
-}
-
-function bulkDelete() {
-  showConfirm(`Delete ${selectedIds.value.length} selected documents?`, () => {
-    selectedIds.value.forEach(id => deleteDocument(id))
-    toast.success(`${selectedIds.value.length} documents moved to trash`)
-    selectedIds.value = []
-  })
-}
-
-// --- Confirmation wrappers ---
-function onUnarchiveRequested(id: number) {
-  showConfirm('Are you sure you want to unarchive this document?', () => {
-    unarchiveDocument(id)
-    toast.success('Document unarchived successfully')
-  })
-}
-
-function onDeleteRequested(id: number) {
-  showConfirm('Are you sure you want to delete this document?', () => {
-    deleteDocument(id)
-    toast.success('Document moved to trash')
-  })
-}
 
 // --- Filter, sort & pagination state ---
 const search = ref('')
@@ -350,6 +232,24 @@ const sortDirection = ref<'asc'|'desc'>('desc')
 
 const page = ref(1)
 const pageSize = ref(10)
+
+// Load documents only once
+const isLoaded = ref(false);
+
+onMounted(() => {
+  if (!isLoaded.value) {
+    loadDocuments();
+    isLoaded.value = true;
+  }
+})
+
+// --- Confirmation wrappers ---
+function onRestoreRequested(id: number) {
+  showConfirm('Are you sure you want to restore this document?', () => {
+    restoreDocument(id)
+    toast.success('Document restored successfully')
+  })
+}
 
 // Format date helper
 function formatDate(dateString: string) {
@@ -362,31 +262,9 @@ function formatDate(dateString: string) {
   })
 }
 
-// Fix for NodeJS.Timeout error - use number type instead
-const intervalId = ref<number | null>(null);
-
-// Load documents, check auto-archive, and cleanup on component mount
-onMounted(() => {
-  loadDocuments();
-  checkAutoArchive();
-
-  // Set up interval for periodic checks
-  intervalId.value = window.setInterval(() => {
-    checkAutoArchive();
-    cleanupArchive();
-  }, 3600000); // Every hour
-});
-
-// Clean up interval on component unmount
-onUnmounted(() => {
-  if (intervalId.value) {
-    clearInterval(intervalId.value);
-  }
-});
-
 // --- Computed lists ---
 const filtered = computed(() => {
-  let list = documents.value.filter(d => d.isArchived && !d.isDeleted)
+  let list = documents.value.filter(d => d.isDeleted)
 
   if (search.value) {
     const q = search.value.toLowerCase()
@@ -437,7 +315,6 @@ function resetFilters() {
   page.value = 1
 }
 </script>
-
 
 <style>
 .animate-fadeIn {
