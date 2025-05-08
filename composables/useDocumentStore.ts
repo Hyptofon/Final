@@ -12,12 +12,9 @@ export interface Document {
     isDeleted: boolean
     archivedAt: string | null
     compressed: boolean
-    /** Previous state before archiving */
     previousState?: Omit<Document, 'history' | 'previousState'> | null
-    /** Full history of document states */
     history: {
         timestamp: string
-        /** State without the history array */
         data: Omit<Document, 'history'>
     }[]
 }
@@ -49,23 +46,23 @@ export function useDocumentStore() {
         documents.value = [
             {
                 id: 1,
-                title: 'Project Proposal',
-                content: 'This is a detailed project proposal for the new marketing campaign.',
+                title: 'Employee Handbook',
+                content: 'Company policies and guidelines for all staff members.',
                 status: 'active',
-                createdAt: new Date(Date.now() - 5 * 24 * 3600e3).toISOString(),
+                createdAt: new Date(Date.now() - 12 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
+                compressed: true,
                 history: []
             },
             {
                 id: 2,
-                title: 'Meeting Notes',
-                content: 'Notes from the quarterly planning meeting with the executive team.',
-                status: 'completed',
-                createdAt: new Date(Date.now() - 30 * 24 * 3600e3).toISOString(),
+                title: 'Website Redesign Plan',
+                content: 'Initial concept and design approach for the website overhaul project.',
+                status: 'pending',
+                createdAt: new Date(Date.now() - 8 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
@@ -75,10 +72,101 @@ export function useDocumentStore() {
             },
             {
                 id: 3,
-                title: 'Budget Report',
-                content: 'Financial analysis and budget report for Q2 2023.',
+                title: 'Customer Feedback Summary',
+                content: 'Compiled feedback from recent user surveys and support tickets.',
+                status: 'completed',
+                createdAt: new Date(Date.now() - 20 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: false,
+                history: []
+            },
+            {
+                id: 4,
+                title: 'Onboarding Checklist',
+                content: 'Tasks and resources for onboarding new hires effectively.',
+                status: 'active',
+                createdAt: new Date(Date.now() - 3 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: false,
+                history: []
+            },
+            {
+                id: 5,
+                title: 'Vendor Contract Draft',
+                content: 'Draft agreement terms for new supplier partnerships.',
                 status: 'pending',
-                createdAt: new Date(Date.now() - 15 * 24 * 3600e3).toISOString(),
+                createdAt: new Date(Date.now() - 45 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: false,
+                history: []
+            },
+            {
+                id: 6,
+                title: 'Security Audit Report',
+                content: 'Findings and recommendations from the latest system security audit.',
+                status: 'completed',
+                createdAt: new Date(Date.now() - 60 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: true,
+                history: []
+            },
+            {
+                id: 7,
+                title: 'Annual Performance Review',
+                content: 'Performance summary and goals for team members this year.',
+                status: 'active',
+                createdAt: new Date(Date.now() - 10 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: false,
+                history: []
+            },
+            {
+                id: 8,
+                title: 'Product Launch Timeline',
+                content: 'Detailed schedule leading up to the next product release.',
+                status: 'pending',
+                createdAt: new Date(Date.now() - 18 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: true,
+                history: []
+            },
+            {
+                id: 9,
+                title: 'Training Materials Outline',
+                content: 'Structure and content plan for employee training sessions.',
+                status: 'completed',
+                createdAt: new Date(Date.now() - 22 * 24 * 3600e3).toISOString(),
+                updatedAt: new Date().toISOString(),
+                isArchived: false,
+                isDeleted: false,
+                archivedAt: null,
+                compressed: false,
+                history: []
+            },
+            {
+                id: 10,
+                title: 'Social Media Strategy',
+                content: 'Plan to improve engagement and reach across platforms.',
+                status: 'active',
+                createdAt: new Date(Date.now() - 6 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
@@ -90,7 +178,6 @@ export function useDocumentStore() {
         saveDocuments()
     }
 
-    // Save documents to localStorage
     function saveDocuments() {
         localStorage.setItem('documents', JSON.stringify(documents.value))
         // Simulated backend API call (commented out)
@@ -132,21 +219,6 @@ export function useDocumentStore() {
         documents.value.push(newDoc)
     }
 
-    // Update an existing document
-    function updateDocument(id: number, updates: Partial<Document>) {
-        const idx = documents.value.findIndex(d => d.id === id)
-        if (idx === -1) return
-
-        // Add current state to history before updating
-        addToHistory(documents.value[idx])
-
-        documents.value[idx] = {
-            ...documents.value[idx],
-            ...updates,
-            updatedAt: new Date().toISOString()
-        }
-    }
-
     // Archive a document
     function archiveDocument(id: number) {
         const idx = documents.value.findIndex(d => d.id === id)
@@ -181,81 +253,47 @@ export function useDocumentStore() {
         }
     }
 
-    // Unarchive a document
+// Unarchive a document
     function unarchiveDocument(id: number) {
         const idx = documents.value.findIndex(d => d.id === id)
         if (idx === -1) return
 
         const doc = documents.value[idx]
-
-        // Skip if not archived
         if (!doc.isArchived) return
 
-        // Add to history
+        // Зберігаємо поточний (архівований) стан до історії
         addToHistory(doc)
 
-        // Restore from previous state if available
-        if (doc.previousState) {
-            documents.value[idx] = {
+        const restored: Document = doc.previousState
+            ? {
                 ...doc.previousState,
+                isArchived: false,
+                archivedAt: null,
+                compressed: false,
                 updatedAt: new Date().toISOString(),
-                history: doc.history,
+                history: [
+                    ...doc.history,
+                    {
+                        timestamp: new Date().toISOString(),
+                        data: { ...doc, previousState: null }
+                    }
+                ],
                 previousState: null
             }
-        } else {
-            // Basic unarchive if no previous state
-            documents.value[idx] = {
+            : {
                 ...doc,
                 isArchived: false,
                 archivedAt: null,
                 compressed: false,
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                previousState: null
             }
-        }
+
+        documents.value[idx] = restored
     }
 
-    // Move document to trash
-    function deleteDocument(id: number) {
-        const idx = documents.value.findIndex(d => d.id === id)
-        if (idx === -1) return
 
-        // Add to history
-        addToHistory(documents.value[idx])
 
-        documents.value[idx] = {
-            ...documents.value[idx],
-            isDeleted: true,
-            updatedAt: new Date().toISOString()
-        }
-    }
-
-    // Restore document from trash
-    function restoreDocument(id: number) {
-        const idx = documents.value.findIndex(d => d.id === id)
-        if (idx === -1) return
-
-        // Add to history
-        addToHistory(documents.value[idx])
-
-        documents.value[idx] = {
-            ...documents.value[idx],
-            isDeleted: false,
-            updatedAt: new Date().toISOString()
-        }
-    }
-
-    // Revert to a previous version
-    function revertToVersion(id: number, versionIndex: number) {
-        const doc = documents.value.find(d => d.id === id)
-        if (!doc || !doc.history[versionIndex]) return
-
-        const version = doc.history[versionIndex]
-        documents.value = documents.value.map(d =>
-            d.id === id
-                ? { ...version.data, updatedAt: new Date().toISOString(), history: d.history }
-                : d
-        )
-    }
 
     // Check for documents that should be auto-archived
     function checkAutoArchive() {
@@ -282,23 +320,14 @@ export function useDocumentStore() {
         })
     }
 
-    // Permanently delete a document
-    function permanentlyDeleteDocument(id: number) {
-        documents.value = documents.value.filter(d => d.id !== id)
-    }
 
     return {
         documents,
         loadDocuments,
         addDocument,
-        updateDocument,
         archiveDocument,
         unarchiveDocument,
-        deleteDocument,
-        restoreDocument,
-        revertToVersion,
         checkAutoArchive,
         cleanupArchive,
-        permanentlyDeleteDocument
     }
 }

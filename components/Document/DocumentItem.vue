@@ -68,39 +68,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
           </svg>
         </button>
-
-        <button
-            v-if="!document.isDeleted"
-            @click="emit('delete', document.id)"
-            class="text-red-600 hover:text-red-900 transition-colors p-1.5 hover:bg-red-50 rounded-full"
-            title="Delete"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-
-        <button
-            v-if="document.isDeleted"
-            @click="emit('restore', document.id)"
-            class="text-green-600 hover:text-green-900 transition-colors p-1.5 hover:bg-green-50 rounded-full"
-            title="Restore"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-          </svg>
-        </button>
-
-        <button
-            v-if="!document.isArchived && !document.isDeleted"
-            @click="emit('edit', document)"
-            class="text-blue-600 hover:text-blue-900 transition-colors p-1.5 hover:bg-blue-50 rounded-full"
-            title="Edit"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
       </div>
     </td>
   </tr>
@@ -123,9 +90,6 @@ const emit = defineEmits<{
   (e: 'select', id: number): void
   (e: 'archive', id: number): void
   (e: 'unarchive', id: number): void
-  (e: 'delete', id: number): void
-  (e: 'restore', id: number): void
-  (e: 'edit', doc: Document): void
 }>()
 
 // Compressed content
@@ -146,3 +110,70 @@ const formattedDate = computed(() =>
 // Unpacking for template
 const { document, isSelected } = toRefs(props)
 </script>
+
+
+// import onMounted для можливих запитів
+import { computed, toRefs, onMounted } from 'vue'
+
+// 1. Отримати повні дані по документу (наприклад, якщо буде детальний перегляд)
+// onMounted(async () => {
+//   try {
+//     const res = await fetch(`/api/documents/${document.value.id}`)
+//     const data = await res.json()
+//     console.log('Документ повністю:', data)
+//   } catch (error) {
+//     console.error('Помилка отримання документа:', error)
+//   }
+// })
+
+// 2. Архівувати документ (PUT / PATCH)
+// async function archiveDocument() {
+//   try {
+//     const res = await fetch(`/api/documents/${document.value.id}/archive`, {
+//       method: 'PATCH',
+//     })
+//     const result = await res.json()
+//     console.log('Архівовано документ:', result)
+//   } catch (error) {
+//     console.error('Не вдалося архівувати:', error)
+//   }
+// }
+
+// 3. Розархівувати документ
+// async function unarchiveDocument() {
+//   try {
+//     const res = await fetch(`/api/documents/${document.value.id}/unarchive`, {
+//       method: 'PATCH',
+//     })
+//     const result = await res.json()
+//     console.log('Розархівовано документ:', result)
+//   } catch (error) {
+//     console.error('Не вдалося розархівувати:', error)
+//   }
+// }
+
+// 4. Оновити статус документа
+// async function updateStatus(newStatus: string) {
+//   try {
+//     const res = await fetch(`/api/documents/${document.value.id}/status`, {
+//       method: 'PATCH',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({ status: newStatus })
+//     })
+//     const result = await res.json()
+//     console.log('Оновлено статус:', result)
+//   } catch (error) {
+//     console.error('Помилка оновлення статусу:', error)
+//   }
+// }
+
+// 5. Отримати пов’язані ресурси (наприклад, історію змін)
+// async function fetchDocumentHistory() {
+//   try {
+//     const res = await fetch(`/api/documents/${document.value.id}/history`)
+//     const history = await res.json()
+//     console.log('Історія документа:', history)
+//   } catch (error) {
+//     console.error('Помилка отримання історії:', error)
+//   }
+// }
