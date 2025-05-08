@@ -4,19 +4,12 @@
       <!-- Header -->
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Document Management System</h1>
-        <p class="text-gray-600">Manage, organize, and track your documents</p>
       </header>
 
       <!-- Tabs -->
       <div class="flex mb-8 border-b border-gray-200">
         <NuxtLink to="/documents" class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-medium -mb-px">
           All Documents
-        </NuxtLink>
-        <NuxtLink to="/documents/archive" class="px-6 py-3 text-gray-600 hover:text-blue-600">
-          Archive
-        </NuxtLink>
-        <NuxtLink to="/documents/trash" class="px-6 py-3 text-gray-600 hover:text-blue-600">
-          Trash
         </NuxtLink>
       </div>
 
@@ -86,6 +79,7 @@
               v-model.number="pageSize"
               class="px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
           >
+            <option value="-1">All</option>
             <option v-for="n in [5,10,20,50]" :key="n" :value="n">{{ n }}</option>
           </select>
           <button
@@ -120,15 +114,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
             </svg>
             Archive Selected
-          </button>
-          <button
-              @click="bulkDelete"
-              class="px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all flex items-center gap-2 shadow-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete Selected
           </button>
         </div>
       </div>
@@ -191,33 +176,13 @@
               <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex gap-3">
                   <button
-                      v-if="!doc.isArchived && !doc.isDeleted"
+                      v-if="!doc.isArchived"
                       @click="onArchiveRequested(doc.id)"
                       class="text-amber-600 hover:text-amber-900 transition-colors p-1.5 hover:bg-amber-50 rounded-full"
                       title="Archive"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                  </button>
-                  <button
-                      v-if="!doc.isDeleted"
-                      @click="onDeleteRequested(doc.id)"
-                      class="text-red-600 hover:text-red-900 transition-colors p-1.5 hover:bg-red-50 rounded-full"
-                      title="Delete"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                  <button
-                      v-if="!doc.isArchived && !doc.isDeleted"
-                      @click="openEditModal(doc)"
-                      class="text-blue-600 hover:text-blue-900 transition-colors p-1.5 hover:bg-blue-50 rounded-full"
-                      title="Edit"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                 </div>
@@ -240,7 +205,10 @@
       </div>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center bg-white rounded-xl border border-gray-100 px-6 py-4 shadow-sm">
+      <div
+          v-if="pageSize !== -1"
+          class="flex justify-between items-center bg-white rounded-xl border border-gray-100 px-6 py-4 shadow-sm"
+      >
         <div class="text-sm text-gray-700 font-medium">
           Showing <span class="font-semibold text-blue-600">{{ start + 1 }}</span> to <span class="font-semibold text-blue-600">{{ Math.min(start + paginated.length, filtered.length) }}</span> of <span class="font-semibold text-blue-600">{{ filtered.length }}</span> documents
         </div>
@@ -380,7 +348,6 @@ const {
   addDocument,
   updateDocument,
   archiveDocument,
-  deleteDocument,
   checkAutoArchive,
   cleanupArchive
 } = useDocumentStore()
@@ -417,26 +384,11 @@ function bulkArchive() {
   })
 }
 
-function bulkDelete() {
-  showConfirm(`Delete ${selectedIds.value.length} selected documents?`, () => {
-    selectedIds.value.forEach(id => deleteDocument(id))
-    toast.success(`${selectedIds.value.length} documents moved to trash`)
-    selectedIds.value = []
-  })
-}
-
 // --- Confirmation wrappers ---
 function onArchiveRequested(id: number) {
   showConfirm('Are you sure you want to archive this document?', () => {
     archiveDocument(id)
     toast.success('Document archived successfully')
-  })
-}
-
-function onDeleteRequested(id: number) {
-  showConfirm('Are you sure you want to delete this document?', () => {
-    deleteDocument(id)
-    toast.success('Document moved to trash')
   })
 }
 
@@ -458,14 +410,6 @@ const formData = reactive({
   content: '',
   status: 'active' as 'active' | 'pending' | 'completed'
 })
-
-function openEditModal(doc: Document) {
-  editingDocument.value = doc
-  formData.title = doc.title
-  formData.content = doc.content
-  formData.status = doc.status
-  showAddEditModal.value = true
-}
 
 function saveDocument() {
   if (!formData.title.trim()) {
@@ -504,7 +448,6 @@ function formatDate(dateString: string) {
   })
 }
 
-// Fix for NodeJS.Timeout error - use number type instead
 let intervalId: number;
 
 const setupPeriodicChecks = () => {
@@ -528,7 +471,7 @@ onUnmounted(() => {
 
 // --- Computed lists ---
 const filtered = computed(() => {
-  let list = documents.value.filter(d => !d.isArchived && !d.isDeleted)
+  let list = documents.value.filter(d => !d.isArchived)
 
   if (search.value) {
     const q = search.value.toLowerCase()
@@ -557,7 +500,9 @@ const sorted = computed(() =>
 
 const start = computed(() => (page.value - 1) * pageSize.value)
 const paginated = computed(() =>
-    sorted.value.slice(start.value, start.value + pageSize.value)
+    pageSize.value === -1
+        ? sorted.value
+        : sorted.value.slice(start.value, start.value + pageSize.value)
 )
 const totalPages = computed(() =>
     Math.ceil(filtered.value.length / pageSize.value) || 1
@@ -576,7 +521,12 @@ function sortBy(field: 'title'|'createdAt') {
 function resetFilters() {
   search.value = ''
   filterStatus.value = 'all'
+  pageSize.value = 10
+  sortField.value = 'createdAt'
+  sortDirection.value = 'desc'
   page.value = 1
+  selectedIds.value = []
+  loadDocuments()
 }
 </script>
 

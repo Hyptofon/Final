@@ -4,7 +4,6 @@
       <!-- Header -->
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Archive</h1>
-        <p class="text-gray-600">View and manage your archived documents</p>
       </header>
 
       <!-- Tabs -->
@@ -14,9 +13,6 @@
         </NuxtLink>
         <NuxtLink to="/documents/archive" class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-medium -mb-px">
           Archive
-        </NuxtLink>
-        <NuxtLink to="/documents/trash" class="px-6 py-3 text-gray-600 hover:text-blue-600">
-          Trash
         </NuxtLink>
       </div>
 
@@ -75,6 +71,7 @@
               v-model.number="pageSize"
               class="px-3 py-2 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
+            <option value="-1">All</option>
             <option v-for="n in [5,10,20,50]" :key="n" :value="n">{{ n }}</option>
           </select>
           <button
@@ -104,15 +101,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
             </svg>
             Unarchive Selected
-          </button>
-          <button
-              @click="bulkDelete"
-              class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all flex items-center gap-1"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete Selected
           </button>
         </div>
       </div>
@@ -186,15 +174,6 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                     </svg>
                   </button>
-                  <button
-                      @click="onDeleteRequested(doc.id)"
-                      class="text-red-600 hover:text-red-900 transition-colors"
-                      title="Delete"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
                 </div>
               </td>
             </tr>
@@ -215,7 +194,10 @@
       </div>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center bg-white rounded-lg border border-gray-200 px-4 py-3">
+      <div
+          v-if="pageSize !== -1"
+          class="flex justify-between items-center bg-white rounded-xl border border-gray-100 px-6 py-4 shadow-sm"
+      >
         <div class="text-sm text-gray-700">
           Showing <span class="font-medium">{{ start + 1 }}</span> to <span class="font-medium">{{ Math.min(start + paginated.length, filtered.length) }}</span> of <span class="font-medium">{{ filtered.length }}</span> documents
         </div>
@@ -246,7 +228,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useDocumentStore, type Document } from '~/composables/useDocumentStore'
+import { useDocumentStore } from '~/composables/useDocumentStore'
 import ConfirmDialog from '~/components/Interface/ConfirmDialog.vue'
 import { useToast } from 'vue-toastification'
 import { onMounted, onUnmounted } from 'vue';
@@ -281,7 +263,6 @@ const {
   documents,
   loadDocuments,
   unarchiveDocument,
-  deleteDocument,
   checkAutoArchive,
   cleanupArchive
 } = useDocumentStore()
@@ -318,26 +299,11 @@ function bulkUnarchive() {
   })
 }
 
-function bulkDelete() {
-  showConfirm(`Delete ${selectedIds.value.length} selected documents?`, () => {
-    selectedIds.value.forEach(id => deleteDocument(id))
-    toast.success(`${selectedIds.value.length} documents moved to trash`)
-    selectedIds.value = []
-  })
-}
-
 // --- Confirmation wrappers ---
 function onUnarchiveRequested(id: number) {
   showConfirm('Are you sure you want to unarchive this document?', () => {
     unarchiveDocument(id)
     toast.success('Document unarchived successfully')
-  })
-}
-
-function onDeleteRequested(id: number) {
-  showConfirm('Are you sure you want to delete this document?', () => {
-    deleteDocument(id)
-    toast.success('Document moved to trash')
   })
 }
 
@@ -362,7 +328,6 @@ function formatDate(dateString: string) {
   })
 }
 
-// Fix for NodeJS.Timeout error - use number type instead
 const intervalId = ref<number | null>(null);
 
 // Load documents, check auto-archive, and cleanup on component mount
@@ -386,7 +351,7 @@ onUnmounted(() => {
 
 // --- Computed lists ---
 const filtered = computed(() => {
-  let list = documents.value.filter(d => d.isArchived && !d.isDeleted)
+  let list = documents.value.filter(d => d.isArchived)
 
   if (search.value) {
     const q = search.value.toLowerCase()
@@ -415,7 +380,9 @@ const sorted = computed(() =>
 
 const start = computed(() => (page.value - 1) * pageSize.value)
 const paginated = computed(() =>
-    sorted.value.slice(start.value, start.value + pageSize.value)
+    pageSize.value === -1
+        ? sorted.value
+        : sorted.value.slice(start.value, start.value + pageSize.value)
 )
 const totalPages = computed(() =>
     Math.ceil(filtered.value.length / pageSize.value) || 1
@@ -434,7 +401,12 @@ function sortBy(field: 'title'|'createdAt') {
 function resetFilters() {
   search.value = ''
   filterStatus.value = 'all'
+  pageSize.value = 10
+  sortField.value = 'createdAt'
+  sortDirection.value = 'desc'
   page.value = 1
+  selectedIds.value = []
+  loadDocuments()
 }
 </script>
 
