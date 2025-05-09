@@ -1,15 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-    <div class="container mx-auto p-6">
-      <!-- Header -->
-      <header class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Document Management System</h1>
-      </header>
-
+  <div class="bg-white">
+  <div class="container mx-auto p-6">
       <!-- Tabs -->
       <div class="flex mb-8 border-b border-gray-200">
         <NuxtLink to="/documents" class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-medium -mb-px">
-          All Documents
+          Усі документи
         </NuxtLink>
       </div>
 
@@ -18,7 +13,7 @@
         <div class="relative flex-1 min-w-[300px]">
           <input
               v-model="search"
-              placeholder="Search documents..."
+              placeholder="Пошук документів..."
               class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
           />
           <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -31,10 +26,10 @@
             v-model="filterStatus"
             class="px-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm min-w-[180px]"
         >
-          <option value="all">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
+          <option value="all">Всі статуси</option>
+          <option value="active">Активний</option>
+          <option value="pending">На розгляді</option>
+          <option value="completed">Завершений</option>
         </select>
         <button
             @click="showAddEditModal = true; editingDocument = null"
@@ -43,7 +38,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Document
+          Додати документ
         </button>
       </div>
 
@@ -55,7 +50,7 @@
               class="px-5 py-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm"
               :class="{'bg-blue-50 border-blue-200 text-blue-700': sortField === 'title'}"
           >
-            <span>Title</span>
+            <span>Назва</span>
             <svg v-if="sortField === 'title'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" v-if="sortDirection === 'desc'" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" v-else />
@@ -66,7 +61,7 @@
               class="px-5 py-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm"
               :class="{'bg-blue-50 border-blue-200 text-blue-700': sortField === 'createdAt'}"
           >
-            <span>Date</span>
+            <span>Дата</span>
             <svg v-if="sortField === 'createdAt'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" v-if="sortDirection === 'desc'" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" v-else />
@@ -74,12 +69,12 @@
           </button>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-gray-600 font-medium">Rows:</span>
+          <span class="text-gray-600 font-medium">Рядків:</span>
           <select
               v-model.number="pageSize"
               class="px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
           >
-            <option value="-1">All</option>
+            <option value="-1">Всі</option>
             <option v-for="n in [5,10,20,50]" :key="n" :value="n">{{ n }}</option>
           </select>
           <button
@@ -89,7 +84,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Reset
+            Скинути
           </button>
         </div>
       </div>
@@ -103,7 +98,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          {{ selectedIds.length }} document(s) selected
+          {{ selectedIds.length }} документів вибрано
         </span>
         <div class="flex gap-3">
           <button
@@ -113,7 +108,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
             </svg>
-            Archive Selected
+            Архівувати вибрані
           </button>
         </div>
       </div>
@@ -132,11 +127,11 @@
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
               </th>
-              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Заголовок</th>
+              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Вміст</th>
+              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата створення</th>
+              <th scope="col" class="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
             </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
@@ -154,7 +149,7 @@
               </td>
               <td class="px-4 py-4">
                 <div class="text-sm text-gray-500 max-w-xs truncate">
-                  <span v-if="doc.compressed">{{ doc.content }} <span class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full">[compressed]</span></span>
+                  <span v-if="doc.compressed">{{ doc.content }} <span class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full">[стиснуто]</span></span>
                   <span v-else>{{ doc.content }}</span>
                 </div>
               </td>
@@ -167,7 +162,7 @@
                       'bg-blue-100 text-blue-800': doc.status === 'active'
                     }"
                   >
-                    {{ doc.status }}
+                      {{ statusLabels[doc.status] }}
                   </span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap">
@@ -179,7 +174,7 @@
                       v-if="!doc.isArchived"
                       @click="onArchiveRequested(doc.id)"
                       class="text-amber-600 hover:text-amber-900 transition-colors p-1.5 hover:bg-amber-50 rounded-full"
-                      title="Archive"
+                      title="Архівувати"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -194,8 +189,8 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <p class="text-xl font-medium mb-1">No documents found</p>
-                  <p class="text-sm">Try adjusting your search or filter criteria</p>
+                  <p class="text-xl font-medium mb-1">Документів не знайдено</p>
+                  <p class="text-sm">Спробуйте змінити критерії пошуку або фільтра</p>
                 </div>
               </td>
             </tr>
@@ -210,7 +205,7 @@
           class="flex justify-between items-center bg-white rounded-xl border border-gray-100 px-6 py-4 shadow-sm"
       >
         <div class="text-sm text-gray-700 font-medium">
-          Showing <span class="font-semibold text-blue-600">{{ start + 1 }}</span> to <span class="font-semibold text-blue-600">{{ Math.min(start + paginated.length, filtered.length) }}</span> of <span class="font-semibold text-blue-600">{{ filtered.length }}</span> documents
+          Показано з <span class="font-semibold text-blue-600">{{ start + 1 }}</span> по <span class="font-semibold text-blue-600">{{ Math.min(start + paginated.length, filtered.length) }}</span> з <span class="font-semibold text-blue-600">{{ filtered.length }}</span> документів
         </div>
         <div class="flex gap-3">
           <button
@@ -221,14 +216,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Previous
+            Попередня
           </button>
           <button
               @click="page++"
               :disabled="page === totalPages || totalPages === 0"
               class="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center gap-1"
           >
-            Next
+            Наступна
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
@@ -238,10 +233,10 @@
     </div>
 
     <!-- Add/Edit Document Modal -->
-    <div v-if="showAddEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div v-if="showAddEditModal" class="fixed inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-scaleIn">
         <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 border-b border-blue-700 flex justify-between items-center">
-          <h2 class="text-xl font-bold text-white">{{ editingDocument ? 'Edit Document' : 'Add New Document' }}</h2>
+          <h2 class="text-xl font-bold text-white">{{ editingDocument ? 'Редагувати документ' : 'Додати новий документ' }}</h2>
           <button @click="showAddEditModal = false" class="text-white hover:text-gray-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -249,35 +244,36 @@
           </button>
         </div>
 
-        <div class="p-6">
+
+      <div class="p-6">
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок</label>
             <input
                 v-model="formData.title"
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter document title"
+                placeholder="Введіть заголовок документа"
             />
           </div>
 
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Вміст</label>
             <textarea
                 v-model="formData.content"
                 rows="4"
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter document content"
+                placeholder="Введіть вміст документа"
             ></textarea>
           </div>
 
           <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
             <select
                 v-model="formData.status"
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
+              <option value="active">Активний</option>
+              <option value="pending">На розгляді</option>
+              <option value="completed">Завершений</option>
             </select>
           </div>
 
@@ -286,13 +282,13 @@
                 @click="showAddEditModal = false"
                 class="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              Скасувати
             </button>
             <button
                 @click="saveDocument"
                 class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
             >
-              Save Document
+              Зберегти документ
             </button>
           </div>
         </div>
@@ -309,12 +305,19 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
-import { ref, computed, reactive, onUnmounted } from 'vue'
+import { ref, computed, reactive, onUnmounted, onMounted } from 'vue'
 import { useDocumentStore, type Document } from '~/composables/useDocumentStore'
 import ConfirmDialog from '~/components/Interface/ConfirmDialog.vue'
 import { useToast } from 'vue-toastification'
-import { onMounted } from 'vue';
+
+
+const statusLabels: Record<string, string> = {
+  active: 'Активний',
+  pending: 'На розгляді',
+  completed: 'Завершений'
+}
 
 // Toast notifications
 const toast = useToast()
@@ -346,7 +349,6 @@ const {
   documents,
   loadDocuments,
   addDocument,
-  updateDocument,
   archiveDocument,
   checkAutoArchive,
   cleanupArchive
@@ -377,18 +379,18 @@ function toggleSelectAll() {
 }
 
 function bulkArchive() {
-  showConfirm(`Archive ${selectedIds.value.length} selected documents?`, () => {
+  showConfirm(`Архів ${selectedIds.value.length} вибрані документи?`, () => {
     selectedIds.value.forEach(id => archiveDocument(id))
-    toast.success(`${selectedIds.value.length} documents archived`)
+    toast.success('Документи архівовано')
     selectedIds.value = []
   })
 }
 
 // --- Confirmation wrappers ---
 function onArchiveRequested(id: number) {
-  showConfirm('Are you sure you want to archive this document?', () => {
+  showConfirm('Ви впевнені, що хочете архівувати цей документ?', () => {
     archiveDocument(id)
-    toast.success('Document archived successfully')
+    toast.success('Документ успішно архівовано')
   })
 }
 
@@ -413,28 +415,16 @@ const formData = reactive({
 
 function saveDocument() {
   if (!formData.title.trim()) {
-    toast.error('Title is required')
+    toast.error("Заголовок обов'язковий")
     return
-  }
-
-  if (editingDocument.value) {
-    // Update existing document
-    updateDocument(editingDocument.value.id, {
-      title: formData.title,
-      content: formData.content,
-      status: formData.status
-    })
-    toast.success('Document updated successfully')
   } else {
-    // Add new document
     addDocument({
       title: formData.title,
       content: formData.content,
       status: formData.status
     })
-    toast.success('Document added successfully')
+    toast.success('Документ успішно додано')
   }
-
   showAddEditModal.value = false
 }
 
@@ -448,7 +438,7 @@ function formatDate(dateString: string) {
   })
 }
 
-let intervalId: number;
+let intervalId: number
 
 const setupPeriodicChecks = () => {
   checkAutoArchive()
@@ -457,17 +447,17 @@ const setupPeriodicChecks = () => {
   intervalId = window.setInterval(() => {
     checkAutoArchive()
     cleanupArchive()
-  }, 3600000);
-};
+  }, 3600000)
+}
 
 onMounted(() => {
-  loadDocuments();
-  setupPeriodicChecks();
-});
+  loadDocuments()
+  setupPeriodicChecks()
+})
 
 onUnmounted(() => {
-  clearInterval(intervalId);
-});
+  clearInterval(intervalId)
+})
 
 // --- Computed lists ---
 const filtered = computed(() => {
@@ -529,6 +519,7 @@ function resetFilters() {
   loadDocuments()
 }
 </script>
+
 
 <style>
 .animate-fadeIn {

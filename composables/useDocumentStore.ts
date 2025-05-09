@@ -46,8 +46,8 @@ export function useDocumentStore() {
         documents.value = [
             {
                 id: 1,
-                title: 'Employee Handbook',
-                content: 'Company policies and guidelines for all staff members.',
+                title: 'Довідник працівника',
+                content: 'Політики компанії та настанови для всіх співробітників.',
                 status: 'active',
                 createdAt: new Date(Date.now() - 12 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -59,8 +59,8 @@ export function useDocumentStore() {
             },
             {
                 id: 2,
-                title: 'Website Redesign Plan',
-                content: 'Initial concept and design approach for the website overhaul project.',
+                title: 'План редизайну сайту',
+                content: 'Початкова концепція та підхід до оновлення вебсайту.',
                 status: 'pending',
                 createdAt: new Date(Date.now() - 8 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -72,8 +72,8 @@ export function useDocumentStore() {
             },
             {
                 id: 3,
-                title: 'Customer Feedback Summary',
-                content: 'Compiled feedback from recent user surveys and support tickets.',
+                title: 'Підсумок зворотного зв’язку клієнтів',
+                content: 'Зібрані відгуки з опитувань користувачів та звернень до підтримки.',
                 status: 'completed',
                 createdAt: new Date(Date.now() - 20 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -85,8 +85,8 @@ export function useDocumentStore() {
             },
             {
                 id: 4,
-                title: 'Onboarding Checklist',
-                content: 'Tasks and resources for onboarding new hires effectively.',
+                title: 'Контрольний список адаптації',
+                content: 'Завдання та ресурси для ефективної адаптації нових працівників.',
                 status: 'active',
                 createdAt: new Date(Date.now() - 3 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -98,8 +98,8 @@ export function useDocumentStore() {
             },
             {
                 id: 5,
-                title: 'Vendor Contract Draft',
-                content: 'Draft agreement terms for new supplier partnerships.',
+                title: 'Чернетка договору з постачальником',
+                content: 'Умови угоди для нових партнерств із постачальниками.',
                 status: 'pending',
                 createdAt: new Date(Date.now() - 45 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -111,8 +111,8 @@ export function useDocumentStore() {
             },
             {
                 id: 6,
-                title: 'Security Audit Report',
-                content: 'Findings and recommendations from the latest system security audit.',
+                title: 'Звіт з аудиту безпеки',
+                content: 'Результати та рекомендації після останнього аудиту системної безпеки.',
                 status: 'completed',
                 createdAt: new Date(Date.now() - 60 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -124,8 +124,8 @@ export function useDocumentStore() {
             },
             {
                 id: 7,
-                title: 'Annual Performance Review',
-                content: 'Performance summary and goals for team members this year.',
+                title: 'Річна оцінка ефективності',
+                content: 'Підсумки роботи та цілі для членів команди на цей рік.',
                 status: 'active',
                 createdAt: new Date(Date.now() - 10 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -137,8 +137,8 @@ export function useDocumentStore() {
             },
             {
                 id: 8,
-                title: 'Product Launch Timeline',
-                content: 'Detailed schedule leading up to the next product release.',
+                title: 'Графік запуску продукту',
+                content: 'Детальний розклад підготовки до наступного релізу продукту.',
                 status: 'pending',
                 createdAt: new Date(Date.now() - 18 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -150,8 +150,8 @@ export function useDocumentStore() {
             },
             {
                 id: 9,
-                title: 'Training Materials Outline',
-                content: 'Structure and content plan for employee training sessions.',
+                title: 'Структура навчальних матеріалів',
+                content: 'План і структура для проведення тренінгів співробітників.',
                 status: 'completed',
                 createdAt: new Date(Date.now() - 22 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -163,8 +163,8 @@ export function useDocumentStore() {
             },
             {
                 id: 10,
-                title: 'Social Media Strategy',
-                content: 'Plan to improve engagement and reach across platforms.',
+                title: 'Стратегія соцмереж',
+                content: 'План покращення взаємодії та охоплення у соціальних мережах.',
                 status: 'active',
                 createdAt: new Date(Date.now() - 6 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -177,6 +177,7 @@ export function useDocumentStore() {
         ]
         saveDocuments()
     }
+
 
     function saveDocuments() {
         localStorage.setItem('documents', JSON.stringify(documents.value))
@@ -319,8 +320,6 @@ export function useDocumentStore() {
             return daysArch <= 90
         })
     }
-
-
     return {
         documents,
         loadDocuments,

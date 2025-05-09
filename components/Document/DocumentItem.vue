@@ -1,6 +1,6 @@
 <template>
   <tr :class="{ 'bg-amber-50 hover:bg-amber-100': document.isArchived, 'hover:bg-gray-50': !document.isArchived }" class="transition-colors">
-    <!-- Checkbox -->
+    <!-- Прапорець -->
     <td class="px-4 py-4 whitespace-nowrap">
       <input
           type="checkbox"
@@ -10,22 +10,22 @@
       />
     </td>
 
-    <!-- Title -->
+    <!-- Заголовок -->
     <td class="px-4 py-4">
       <div class="text-sm font-medium text-gray-900">{{ document.title }}</div>
     </td>
 
-    <!-- Content -->
+    <!-- Вміст -->
     <td class="px-4 py-4">
       <div class="text-sm text-gray-500 max-w-xs truncate">
         <span>{{ compressedContent }}</span>
         <span v-if="document.compressed" class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full">
-          [compressed]
+          [стиснуто]
         </span>
       </div>
     </td>
 
-    <!-- Status -->
+    <!-- Статус -->
     <td class="px-4 py-4 whitespace-nowrap">
       <span
           :class="{
@@ -35,23 +35,23 @@
           'bg-blue-100 text-blue-800': document.status === 'active'
         }"
       >
-        {{ document.status }}
+        {{ statusLabels[document.status] || document.status }}
       </span>
     </td>
 
-    <!-- Created -->
+    <!-- Дата створення -->
     <td class="px-4 py-4 whitespace-nowrap">
       <div class="text-sm text-gray-500">{{ formattedDate }}</div>
     </td>
 
-    <!-- Actions -->
+    <!-- Дії -->
     <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
       <div class="flex gap-2 justify-end">
         <button
             v-if="!document.isArchived && !document.isDeleted"
             @click="emit('archive', document.id)"
             class="text-amber-600 hover:text-amber-900 transition-colors p-1.5 hover:bg-amber-50 rounded-full"
-            title="Archive"
+            title="Архівувати"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -62,7 +62,7 @@
             v-if="document.isArchived && !document.isDeleted"
             @click="emit('unarchive', document.id)"
             class="text-blue-600 hover:text-blue-900 transition-colors p-1.5 hover:bg-blue-50 rounded-full"
-            title="Unarchive"
+            title="Розархівувати"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -73,11 +73,18 @@
   </tr>
 </template>
 
+
 <script setup lang="ts">
 import { computed, toRefs } from 'vue'
 import type { Document } from '~/composables/useDocumentStore'
-// Type-only import
 import type { PropType } from 'vue'
+
+// Мапа статусів для локалізації
+const statusLabels: Record<string, string> = {
+  active: 'Активний',
+  pending: 'На розгляді',
+  completed: 'Завершений'
+}
 
 // Props
 const props = defineProps({
@@ -85,7 +92,7 @@ const props = defineProps({
   isSelected: { type: Boolean as PropType<boolean>, default: false }
 })
 
-// Emissions
+// Emits
 const emit = defineEmits<{
   (e: 'select', id: number): void
   (e: 'archive', id: number): void
@@ -107,9 +114,11 @@ const formattedDate = computed(() =>
     })
 )
 
-// Unpacking for template
+// Для шаблону
 const { document, isSelected } = toRefs(props)
 </script>
+
+
 
 
 // import onMounted для можливих запитів
