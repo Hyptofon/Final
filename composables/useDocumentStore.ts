@@ -1,39 +1,97 @@
 // composables/useDocumentStore.ts
-import { ref, watch } from 'vue'
+import { ref, watch, reactive } from "vue"
 
-export interface Document {
+// Додаємо тип для розширеного previousState
+interface DocumentPreviousState {
     id: number
     title: string
     content: string
-    status: 'active' | 'pending' | 'completed'
+    status: "active" | "pending" | "completed" | "archived"
     createdAt: string
     updatedAt: string
     isArchived: boolean
     isDeleted: boolean
     archivedAt: string | null
     compressed: boolean
-    previousState?: Omit<Document, 'history' | 'previousState'> | null
+    originalContentLength?: number // Додаємо опціональне поле для довжини оригінального контенту
+}
+
+export interface Document {
+    id: number
+    title: string
+    content: string
+    status: "active" | "pending" | "completed" | "archived"
+    createdAt: string
+    updatedAt: string
+    isArchived: boolean
+    isDeleted: boolean
+    archivedAt: string | null
+    compressed: boolean
+    previousState?: DocumentPreviousState | null
     history: {
         timestamp: string
-        data: Omit<Document, 'history'>
+        data: Omit<Document, "history">
     }[]
+}
+
+// Налаштування архівування за замовчуванням
+export interface ArchiveSettings {
+    autoArchiveEnabled: boolean
+    autoArchiveDays: number
+    archiveCompletedDocs: boolean
+    compressContent: boolean
 }
 
 export function useDocumentStore() {
     const documents = ref<Document[]>([])
 
+    // Налаштування архівування (за замовчуванням)
+    const archiveSettings = reactive<ArchiveSettings>({
+        autoArchiveEnabled: true,
+        autoArchiveDays: 30,
+        archiveCompletedDocs: true,
+        compressContent: true,
+    })
+
+    // Завантаження налаштувань архівування
+    function loadArchiveSettings() {
+        const saved = localStorage.getItem("archiveSettings")
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved)
+                // Замінюємо Object.assign на пряме присвоєння кожного поля
+                // щоб гарантувати, що всі поля будуть оновлені
+                if (parsed.autoArchiveEnabled !== undefined) archiveSettings.autoArchiveEnabled = parsed.autoArchiveEnabled
+                if (parsed.autoArchiveDays !== undefined) archiveSettings.autoArchiveDays = parsed.autoArchiveDays
+                if (parsed.archiveCompletedDocs !== undefined)
+                    archiveSettings.archiveCompletedDocs = parsed.archiveCompletedDocs
+                if (parsed.compressContent !== undefined) archiveSettings.compressContent = parsed.compressContent
+            } catch (e) {
+                console.error("Error loading archive settings:", e)
+            }
+        }
+    }
+
+    // Збереження налаштувань архівування
+    function saveArchiveSettings() {
+        localStorage.setItem("archiveSettings", JSON.stringify(archiveSettings))
+    }
+
     // Load documents from localStorage or initialize with mock data
     function loadDocuments() {
-        const saved = localStorage.getItem('documents')
+        // Спочатку завантажуємо налаштування архівування
+        loadArchiveSettings()
+
+        const saved = localStorage.getItem("documents")
         if (saved) {
             try {
                 const parsed = JSON.parse(saved)
                 documents.value = parsed.map((d: any) => ({
                     ...d,
-                    history: Array.isArray(d.history) ? d.history : []
+                    history: Array.isArray(d.history) ? d.history : [],
                 }))
             } catch (e) {
-                console.error('Error loading documents from localStorage:', e)
+                console.error("Error loading documents from localStorage:", e)
                 initializeMockData()
             }
         } else {
@@ -46,140 +104,140 @@ export function useDocumentStore() {
         documents.value = [
             {
                 id: 1,
-                title: 'Employee Handbook',
-                content: 'Company policies and guidelines for all staff members.',
-                status: 'active',
+                title: "Довідник працівника",
+                content: "Політики компанії та настанови для всіх співробітників.",
+                status: "active",
                 createdAt: new Date(Date.now() - 12 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: true,
-                history: []
+                history: [],
             },
             {
                 id: 2,
-                title: 'Website Redesign Plan',
-                content: 'Initial concept and design approach for the website overhaul project.',
-                status: 'pending',
+                title: "План редизайну сайту",
+                content: "Початкова концепція та підхід до оновлення вебсайту.",
+                status: "pending",
                 createdAt: new Date(Date.now() - 8 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 3,
-                title: 'Customer Feedback Summary',
-                content: 'Compiled feedback from recent user surveys and support tickets.',
-                status: 'completed',
+                title: "Підсумок зворотного зв'язку клієнтів",
+                content: "Зібрані відгуки з опитувань користувачів та звернень до підтримки.",
+                status: "completed",
                 createdAt: new Date(Date.now() - 20 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 4,
-                title: 'Onboarding Checklist',
-                content: 'Tasks and resources for onboarding new hires effectively.',
-                status: 'active',
+                title: "Контрольний список адаптації",
+                content: "Завдання та ресурси для ефективної адаптації нових працівників.",
+                status: "active",
                 createdAt: new Date(Date.now() - 3 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 5,
-                title: 'Vendor Contract Draft',
-                content: 'Draft agreement terms for new supplier partnerships.',
-                status: 'pending',
+                title: "Чернетка договору з постачальником",
+                content: "Умови угоди для нових партнерств із постачальниками.",
+                status: "pending",
                 createdAt: new Date(Date.now() - 45 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 6,
-                title: 'Security Audit Report',
-                content: 'Findings and recommendations from the latest system security audit.',
-                status: 'completed',
+                title: "Звіт з аудиту безпеки",
+                content: "Результати та рекомендації після останнього аудиту системної безпеки.",
+                status: "completed",
                 createdAt: new Date(Date.now() - 60 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: true,
-                history: []
+                history: [],
             },
             {
                 id: 7,
-                title: 'Annual Performance Review',
-                content: 'Performance summary and goals for team members this year.',
-                status: 'active',
+                title: "Річна оцінка ефективності",
+                content: "Підсумки роботи та цілі для членів команди на цей рік.",
+                status: "active",
                 createdAt: new Date(Date.now() - 10 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 8,
-                title: 'Product Launch Timeline',
-                content: 'Detailed schedule leading up to the next product release.',
-                status: 'pending',
+                title: "Графік запуску продукту",
+                content: "Детальний розклад підготовки до наступного релізу продукту.",
+                status: "pending",
                 createdAt: new Date(Date.now() - 18 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: true,
-                history: []
+                history: [],
             },
             {
                 id: 9,
-                title: 'Training Materials Outline',
-                content: 'Structure and content plan for employee training sessions.',
-                status: 'completed',
+                title: "Структура навчальних матеріалів",
+                content: "План і структура для проведення тренінгів співробітників.",
+                status: "completed",
                 createdAt: new Date(Date.now() - 22 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
+                history: [],
             },
             {
                 id: 10,
-                title: 'Social Media Strategy',
-                content: 'Plan to improve engagement and reach across platforms.',
-                status: 'active',
+                title: "Стратегія соцмереж",
+                content: "План покращення взаємодії та охоплення у соціальних мережах.",
+                status: "active",
                 createdAt: new Date(Date.now() - 6 * 24 * 3600e3).toISOString(),
                 updatedAt: new Date().toISOString(),
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
                 compressed: false,
-                history: []
-            }
+                history: [],
+            },
         ]
         saveDocuments()
     }
 
     function saveDocuments() {
-        localStorage.setItem('documents', JSON.stringify(documents.value))
+        localStorage.setItem("documents", JSON.stringify(documents.value))
         // Simulated backend API call (commented out)
         // fetch('/api/documents', {
         //   method: 'POST',
@@ -191,20 +249,39 @@ export function useDocumentStore() {
     // Watch for changes and save
     watch(documents, saveDocuments, { deep: true })
 
+    // Watch for changes in archive settings and save
+    watch(archiveSettings, saveArchiveSettings, { deep: true })
+
     // Add current state to document history
     function addToHistory(doc: Document) {
         if (!Array.isArray(doc.history)) doc.history = []
         const { history, ...rest } = doc
         doc.history.push({
             timestamp: new Date().toISOString(),
-            data: rest
+            data: rest,
         })
     }
 
     // Add a new document
-    function addDocument(payload: Omit<Document,
-        'id'|'createdAt'|'updatedAt'|'isArchived'|'isDeleted'|'archivedAt'|'compressed'|'history'|'previousState'
-    >) {
+    function addDocument(
+        payload: Omit<
+            Document,
+            | "id"
+            | "createdAt"
+            | "updatedAt"
+            | "isArchived"
+            | "isDeleted"
+            | "archivedAt"
+            | "compressed"
+            | "history"
+            | "previousState"
+        >,
+    ) {
+        // Перевірка, щоб не можна було створити документ зі статусом 'archived'
+        if (payload.status === "archived") {
+            payload.status = "active" // Замінюємо на 'active' за замовчуванням
+        }
+
         const newDoc: Document = {
             ...payload,
             id: Date.now(),
@@ -214,14 +291,14 @@ export function useDocumentStore() {
             isDeleted: false,
             archivedAt: null,
             compressed: false,
-            history: []
+            history: [],
         }
         documents.value.push(newDoc)
     }
 
     // Archive a document
     function archiveDocument(id: number) {
-        const idx = documents.value.findIndex(d => d.id === id)
+        const idx = documents.value.findIndex((d) => d.id === id)
         if (idx === -1) return
 
         const doc = documents.value[idx]
@@ -232,30 +309,39 @@ export function useDocumentStore() {
         // Save current state before archiving
         const { history, previousState, ...currentState } = doc
 
-        // Add to history
+        // Add current version to history
         addToHistory(doc)
 
-        // Compress content if it's longer than 100 characters
+        // Стискання вмісту, якщо увімкнено в налаштуваннях
+        let isCompressed = false
         let compressedContent = doc.content
-        if (doc.content.length > 100) {
-            compressedContent = doc.content.substring(0, 100) + '...'
+        const originalLength = doc.content.length
+
+        if (archiveSettings.compressContent && doc.content.length > 100) {
+            compressedContent = doc.content.substring(0, 100) + "..."
+            isCompressed = true
         }
 
-        // Update the document
+        // Оновлення документа з правильним прапором compressed та зміна статусу на 'archived'
         documents.value[idx] = {
             ...doc,
             content: compressedContent,
+            status: "archived", // Змінюємо статус на 'archived'
             isArchived: true,
             archivedAt: new Date().toISOString(),
-            compressed: doc.content.length > 100,
+            compressed: isCompressed,
             updatedAt: new Date().toISOString(),
-            previousState: currentState
+            previousState: {
+                ...currentState,
+                originalContentLength: originalLength, // Тепер це поле визначено в типі
+                content: doc.content, // Зберігаємо оригінальний контент
+            },
         }
     }
 
-// Unarchive a document
+    // Unarchive a document
     function unarchiveDocument(id: number) {
-        const idx = documents.value.findIndex(d => d.id === id)
+        const idx = documents.value.findIndex((d) => d.id === id)
         if (idx === -1) return
 
         const doc = documents.value[idx]
@@ -264,44 +350,52 @@ export function useDocumentStore() {
         // Зберігаємо поточний (архівований) стан до історії
         addToHistory(doc)
 
-        const restored: Document = doc.previousState
-            ? {
-                ...doc.previousState,
-                isArchived: false,
-                archivedAt: null,
-                compressed: false,
-                updatedAt: new Date().toISOString(),
-                history: [
-                    ...doc.history,
-                    {
-                        timestamp: new Date().toISOString(),
-                        data: { ...doc, previousState: null }
-                    }
-                ],
-                previousState: null
-            }
-            : {
-                ...doc,
-                isArchived: false,
-                archivedAt: null,
-                compressed: false,
-                updatedAt: new Date().toISOString(),
-                previousState: null
-            }
+        // Відновлюємо попередній статус документа (якщо є previousState)
+        // або залишаємо поточний, але не 'archived'
+        const previousStatus = doc.previousState?.status || "active"
+
+        // Відновлюємо оригінальний контент, якщо він був стиснутий
+        const originalContent = doc.compressed && doc.previousState?.content ? doc.previousState.content : doc.content
+
+        const restored: Document = {
+            ...doc,
+            content: originalContent,
+            status: previousStatus, // Відновлюємо попередній статус, але не 'archived'
+            isArchived: false,
+            archivedAt: null,
+            compressed: false,
+            updatedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(), // Оновлюємо дату створення на поточну
+            history: [
+                ...doc.history,
+                {
+                    timestamp: new Date().toISOString(),
+                    data: { ...doc, previousState: null },
+                },
+            ],
+            previousState: null,
+        }
 
         documents.value[idx] = restored
     }
 
-
-
-
     // Check for documents that should be auto-archived
     function checkAutoArchive() {
+        // Якщо автоархівування вимкнено, виходимо
+        if (!archiveSettings.autoArchiveEnabled) return
+
         const now = Date.now()
-        documents.value.forEach(d => {
+        documents.value.forEach((d) => {
             if (!d.isArchived && !d.isDeleted) {
                 const daysOld = (now - new Date(d.createdAt).getTime()) / 86400e3
-                if (daysOld > 30 || d.status === 'completed') {
+
+                // Архівуємо документи, які старші за вказану кількість днів
+                const shouldArchiveByAge = daysOld > archiveSettings.autoArchiveDays
+
+                // Архівуємо завершені документи, якщо це увімкнено в налаштуваннях
+                const shouldArchiveByStatus = archiveSettings.archiveCompletedDocs && d.status === "completed"
+
+                if (shouldArchiveByAge || shouldArchiveByStatus) {
                     archiveDocument(d.id)
                 }
             }
@@ -311,7 +405,7 @@ export function useDocumentStore() {
     // Clean up old archives (remove archives older than 90 days)
     function cleanupArchive() {
         const now = Date.now()
-        documents.value = documents.value.filter(d => {
+        documents.value = documents.value.filter((d) => {
             if (!d.isArchived) return true
             if (!d.archivedAt) return true
 
@@ -320,14 +414,21 @@ export function useDocumentStore() {
         })
     }
 
+    // Оновлення налаштувань архівування
+    function updateArchiveSettings(settings: Partial<ArchiveSettings>) {
+        Object.assign(archiveSettings, settings)
+        saveArchiveSettings()
+    }
 
     return {
         documents,
+        archiveSettings,
         loadDocuments,
         addDocument,
         archiveDocument,
         unarchiveDocument,
         checkAutoArchive,
         cleanupArchive,
+        updateArchiveSettings,
     }
 }

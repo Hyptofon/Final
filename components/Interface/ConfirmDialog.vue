@@ -1,7 +1,7 @@
 <template>
   <Transition name="fade">
-    <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-scaleIn">
+    <div v-if="visible" class="fixed inset-0 bg-white/5 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white/90 rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-scaleIn">
         <div class="p-6">
           <div class="flex items-center justify-center mb-4">
             <div class="bg-blue-100 rounded-full p-3">
@@ -10,20 +10,20 @@
               </svg>
             </div>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 text-center mb-2">Confirmation</h3>
+          <h3 class="text-lg font-medium text-gray-900 text-center mb-2">Підтвердження</h3>
           <p class="mb-6 text-center text-gray-600">{{ message }}</p>
           <div class="flex justify-center gap-3">
             <button
                 @click="onCancel"
                 class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
-              Cancel
+              Скасувати
             </button>
             <button
                 @click="onConfirm"
                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Confirm
+              Підтвердити
             </button>
           </div>
         </div>
@@ -31,6 +31,8 @@
     </div>
   </Transition>
 </template>
+
+
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
@@ -57,16 +59,6 @@ function onCancel() {
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 .animate-scaleIn {
   animation: scaleIn 0.3s ease-out;
 }
