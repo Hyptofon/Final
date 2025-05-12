@@ -18,10 +18,7 @@
     <!-- Вміст -->
     <td class="px-4 py-4">
       <div class="text-sm text-gray-500 max-w-xs truncate">
-        <span>{{ compressedContent }}</span>
-        <span v-if="showCompressedLabel" class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full">
-          [стиснуто]
-        </span>
+        {{ document.content }}
       </div>
     </td>
 
@@ -100,22 +97,6 @@ const emit = defineEmits<{
   (e: 'archive', id: number): void
   (e: 'unarchive', id: number): void
 }>()
-
-// Compressed content
-const compressedContent = computed(() => {
-  const txt = props.document.content
-  return txt
-})
-
-// Визначаємо, чи потрібно показувати мітку стиснення
-const showCompressedLabel = computed(() => {
-  // Перевіряємо, чи документ стиснутий
-  if (!props.document.compressed) return false;
-
-  // Перевіряємо довжину контенту - якщо більше 100 символів, показуємо мітку
-  return props.document.content.length > 100 ||
-      (props.document.previousState?.originalContentLength || 0) > 100;
-})
 
 // Format date
 const formattedDate = computed(() =>

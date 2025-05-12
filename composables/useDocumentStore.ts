@@ -12,9 +12,6 @@ interface DocumentPreviousState {
     isArchived: boolean
     isDeleted: boolean
     archivedAt: string | null
-    compressed: boolean
-    originalContentLength?: number // Довжина оригінального контенту
-    compressionRatio?: number // Відсоток стиснення
 }
 
 export interface Document {
@@ -27,25 +24,18 @@ export interface Document {
     isArchived: boolean
     isDeleted: boolean
     archivedAt: string | null
-    compressed: boolean
-    previousState?: DocumentPreviousState | null
     history: {
         timestamp: string
         data: Omit<Document, "history">
     }[]
+    previousState?: DocumentPreviousState | null
 }
-
-// Тип рівня стиснення
-export type CompressionLevel = "light" | "medium" | "high"
 
 // Налаштування архівування за замовчуванням
 export interface ArchiveSettings {
     autoArchiveEnabled: boolean
     autoArchiveDays: number
     archiveCompletedDocs: boolean
-    compressContent: boolean
-    compressionLevel: CompressionLevel // Додаємо рівень стиснення
-    compressionThreshold: number // Поріг стиснення (кількість символів)
 }
 
 export function useDocumentStore() {
@@ -56,27 +46,23 @@ export function useDocumentStore() {
         autoArchiveEnabled: true,
         autoArchiveDays: 30,
         archiveCompletedDocs: true,
-        compressContent: true,
-        compressionLevel: "medium", // Середній рівень стиснення за замовчуванням
-        compressionThreshold: 100, // Стискати тексти довші за 100 символів
     })
 
-    // Завантаження налаштувань архівування
     function loadArchiveSettings() {
+        // ТУТ: закоментований GET-запит до API, щоб підвантажувати список документів
+        // fetch('/swagger/v1/documents?perPage=10&page=1&archived=false')
+        //   .then(res => res.json())
+        //   .then(data => {
+        //     documents.value = data.documents
+        //   })
         const saved = localStorage.getItem("archiveSettings")
         if (saved) {
             try {
                 const parsed = JSON.parse(saved)
-                // Замінюємо Object.assign на пряме присвоєння кожного поля
-                // щоб гарантувати, що всі поля будуть оновлені
                 if (parsed.autoArchiveEnabled !== undefined) archiveSettings.autoArchiveEnabled = parsed.autoArchiveEnabled
                 if (parsed.autoArchiveDays !== undefined) archiveSettings.autoArchiveDays = parsed.autoArchiveDays
                 if (parsed.archiveCompletedDocs !== undefined)
                     archiveSettings.archiveCompletedDocs = parsed.archiveCompletedDocs
-                if (parsed.compressContent !== undefined) archiveSettings.compressContent = parsed.compressContent
-                if (parsed.compressionLevel !== undefined) archiveSettings.compressionLevel = parsed.compressionLevel
-                if (parsed.compressionThreshold !== undefined)
-                    archiveSettings.compressionThreshold = parsed.compressionThreshold
             } catch (e) {
                 console.error("Error loading archive settings:", e)
             }
@@ -123,7 +109,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: true,
                 history: [],
             },
             {
@@ -136,7 +121,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -149,7 +133,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -162,7 +145,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -175,7 +157,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -188,7 +169,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: true,
                 history: [],
             },
             {
@@ -201,7 +181,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -214,7 +193,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: true,
                 history: [],
             },
             {
@@ -227,7 +205,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
             {
@@ -240,7 +217,6 @@ export function useDocumentStore() {
                 isArchived: false,
                 isDeleted: false,
                 archivedAt: null,
-                compressed: false,
                 history: [],
             },
         ]
@@ -249,10 +225,10 @@ export function useDocumentStore() {
 
     function saveDocuments() {
         localStorage.setItem("documents", JSON.stringify(documents.value))
-        // Simulated backend API call (commented out)
-        // fetch('/api/documents', {
+        // ТУТ: закоментований POST-запит, щоб відправляти всі документи на сервер
+        // fetch('/swagger/v1/documents', {
         //   method: 'POST',
-        //   headers: {'Content-Type': 'application/json'},
+        //   headers: { 'Content-Type': 'application/json' },
         //   body: JSON.stringify(documents.value)
         // })
     }
@@ -277,15 +253,7 @@ export function useDocumentStore() {
     function addDocument(
         payload: Omit<
             Document,
-            | "id"
-            | "createdAt"
-            | "updatedAt"
-            | "isArchived"
-            | "isDeleted"
-            | "archivedAt"
-            | "compressed"
-            | "history"
-            | "previousState"
+            "id" | "createdAt" | "updatedAt" | "isArchived" | "isDeleted" | "archivedAt" | "history" | "previousState"
         >,
     ) {
         // Перевірка, щоб не можна було створити документ зі статусом 'archived'
@@ -301,62 +269,20 @@ export function useDocumentStore() {
             isArchived: false,
             isDeleted: false,
             archivedAt: null,
-            compressed: false,
             history: [],
         }
         documents.value.push(newDoc)
-    }
-
-    // Функція для стискання вмісту з різними рівнями стиснення
-    function compressContent(
-        content: string,
-        level: CompressionLevel,
-    ): {
-        compressedContent: string
-        compressionRatio: number
-    } {
-        const originalLength = content.length
-
-        // Якщо контент коротший за поріг стиснення, повертаємо його без змін
-        if (originalLength <= archiveSettings.compressionThreshold) {
-            return {
-                compressedContent: content,
-                compressionRatio: 0,
-            }
-        }
-
-        let compressedContent = ""
-        let keepLength = 0
-
-        // Визначаємо скільки символів зберігати в залежності від рівня стиснення
-        switch (level) {
-            case "light":
-                // Легке стиснення - зберігаємо 70% початку і додаємо "..."
-                keepLength = Math.floor(originalLength * 0.7)
-                compressedContent = content.substring(0, keepLength) + "..."
-                break
-            case "medium":
-                // Середнє стиснення - зберігаємо початок і кінець, загалом 50%
-                const mediumKeepStart = Math.floor(originalLength * 0.35)
-                const mediumKeepEnd = Math.floor(originalLength * 0.15)
-                compressedContent =
-                    content.substring(0, mediumKeepStart) + "..." + content.substring(originalLength - mediumKeepEnd)
-                break
-            case "high":
-                // Сильне стиснення - зберігаємо 30% початку і додаємо "..."
-                keepLength = Math.floor(originalLength * 0.3)
-                compressedContent = content.substring(0, keepLength) + "..."
-                break
-            default:
-                // За замовчуванням - середнє стиснення
-                keepLength = Math.floor(originalLength * 0.5)
-                compressedContent = content.substring(0, keepLength) + "..."
-        }
-
-        // Обчислюємо відсоток стиснення
-        const compressionRatio = Math.round(((originalLength - compressedContent.length) / originalLength) * 100)
-
-        return { compressedContent, compressionRatio }
+        //  Після додавання нового документа — POST лише цього запису
+        // fetch('/swagger/v1/documents', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     name: newDoc.title,
+        //     content: newDoc.content,
+        //     status: newDoc.status,
+        //     // …інші поля згідно API
+        //   })
+        // })
     }
 
     // Archive a document
@@ -375,39 +301,23 @@ export function useDocumentStore() {
         // Add current version to history
         addToHistory(doc)
 
-        // Стискання вмісту, якщо увімкнено в налаштуваннях
-        let isCompressed = false
-        let compressedContent = doc.content
-        let compressionRatio = 0
-        const originalLength = doc.content.length
-
-        if (archiveSettings.compressContent && originalLength > archiveSettings.compressionThreshold) {
-            const compressionResult = compressContent(doc.content, archiveSettings.compressionLevel)
-
-            compressedContent = compressionResult.compressedContent
-            compressionRatio = compressionResult.compressionRatio
-            isCompressed = compressionRatio > 0
-        }
-
-        // Оновлення документа з правильним прапором compressed та зміна статусу на 'archived'
+        // Оновлення документа зі зміною статусу на 'archived'
         documents.value[idx] = {
             ...doc,
-            content: compressedContent,
             status: "archived", // Змінюємо статус на 'archived'
             isArchived: true,
             archivedAt: new Date().toISOString(),
-            compressed: isCompressed,
             updatedAt: new Date().toISOString(),
             previousState: {
                 ...currentState,
-                originalContentLength: originalLength,
                 content: doc.content, // Зберігаємо оригінальний контент
-                compressionRatio: compressionRatio, // Зберігаємо відсоток стиснення
             },
         }
+
+        // Після локального архівування — виклик API-архіву
+        // fetch(`/swagger/v1/documents/${id}/archive`)
     }
 
-    // Unarchive a document
     function unarchiveDocument(id: number) {
         const idx = documents.value.findIndex((d) => d.id === id)
         if (idx === -1) return
@@ -415,25 +325,17 @@ export function useDocumentStore() {
         const doc = documents.value[idx]
         if (!doc.isArchived) return
 
-        // Зберігаємо поточний (архівований) стан до історії
         addToHistory(doc)
 
-        // Відновлюємо попередній статус документа (якщо є previousState)
-        // або залишаємо поточний, але не 'archived'
         const previousStatus = doc.previousState?.status || "active"
-
-        // Відновлюємо оригінальний контент, якщо він був стиснутий
-        const originalContent = doc.compressed && doc.previousState?.content ? doc.previousState.content : doc.content
 
         const restored: Document = {
             ...doc,
-            content: originalContent,
-            status: previousStatus, // Відновлюємо попередній статус, але не 'archived'
+            status: previousStatus,
             isArchived: false,
             archivedAt: null,
-            compressed: false,
             updatedAt: new Date().toISOString(),
-            createdAt: new Date().toISOString(), // Оновлюємо дату створення на поточну
+            createdAt: new Date().toISOString(),
             history: [
                 ...doc.history,
                 {
@@ -445,32 +347,24 @@ export function useDocumentStore() {
         }
 
         documents.value[idx] = restored
+        // 5️⃣ Якщо знадобиться відновити на сервері (PUT)
+        // fetch(`/swagger/v1/documents/${id}`, {
+        //   method: 'PUT',
+        //   headers: { 'Content-Type': 'multipart/form-data' },
+        //   body: /* FormData з відновленими полями */
+        // })
+
     }
 
-    // Функція для попереднього перегляду оригінального вмісту без розархівування
-    function previewOriginalContent(id: number): string | null {
-        const doc = documents.value.find((d) => d.id === id)
-        if (!doc || !doc.isArchived || !doc.compressed || !doc.previousState?.content) {
-            return null
-        }
-
-        return doc.previousState.content
-    }
-
-    // Check for documents that should be auto-archived
     function checkAutoArchive() {
-        // Якщо автоархівування вимкнено, виходимо
         if (!archiveSettings.autoArchiveEnabled) return
-
         const now = Date.now()
         documents.value.forEach((d) => {
             if (!d.isArchived && !d.isDeleted) {
                 const daysOld = (now - new Date(d.createdAt).getTime()) / 86400e3
 
-                // Архівуємо документи, які старші за вказану кількість днів
                 const shouldArchiveByAge = daysOld > archiveSettings.autoArchiveDays
 
-                // Архівуємо завершені документи, якщо це увімкнено в налаштуваннях
                 const shouldArchiveByStatus = archiveSettings.archiveCompletedDocs && d.status === "completed"
 
                 if (shouldArchiveByAge || shouldArchiveByStatus) {
@@ -480,7 +374,6 @@ export function useDocumentStore() {
         })
     }
 
-    // Clean up old archives (remove archives older than 90 days)
     function cleanupArchive() {
         const now = Date.now()
         documents.value = documents.value.filter((d) => {
@@ -492,7 +385,6 @@ export function useDocumentStore() {
         })
     }
 
-    // Оновлення налаштувань архівування
     function updateArchiveSettings(settings: Partial<ArchiveSettings>) {
         Object.assign(archiveSettings, settings)
         saveArchiveSettings()
@@ -505,7 +397,6 @@ export function useDocumentStore() {
         addDocument,
         archiveDocument,
         unarchiveDocument,
-        previewOriginalContent,
         checkAutoArchive,
         cleanupArchive,
         updateArchiveSettings,

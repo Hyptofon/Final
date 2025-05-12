@@ -36,7 +36,6 @@
           <option value="active">Активний</option>
           <option value="pending">На розгляді</option>
           <option value="completed">Завершений</option>
-          <option value="archived">Архівовано</option>
         </select>
         <button
             @click="showAddEditModal = true; editingDocument = null"
@@ -156,10 +155,7 @@
               </td>
               <td class="px-4 py-4">
                 <div class="text-sm text-gray-500 max-w-xs truncate">
-                  <span>{{ doc.content }}</span>
-                  <span v-if="shouldShowCompressedLabel(doc)" class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full">
-                    [стиснуто]
-                  </span>
+                  {{ doc.content }}
                 </div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap">
@@ -404,16 +400,6 @@ function onArchiveRequested(id: number) {
   })
 }
 
-// Функція для визначення, чи показувати мітку стиснення
-function shouldShowCompressedLabel(doc: Document): boolean {
-  // Перевіряємо, чи документ стиснутий
-  if (!doc.compressed) return false;
-
-  // Перевіряємо довжину контенту - якщо понад 100 символів, показуємо мітку
-  return doc.content.length > 100 ||
-      (doc.previousState?.originalContentLength || 0) > 100;
-}
-
 // --- Filter, sort & pagination state ---
 const search = ref('')
 const filterStatus = ref<'all'|'active'|'pending'|'completed'|'archived'>('all')
@@ -446,6 +432,12 @@ function saveDocument() {
     toast.success('Документ успішно додано')
   }
   showAddEditModal.value = false
+  //  ТУТ: закоментований POST для додавання через UI
+  // fetch('/swagger/v1/documents', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'multipart/form-data' },
+  //   body: /* FormData з полями title, content, status та, якщо є, файлом */
+  // })
 }
 
 // Format date helper

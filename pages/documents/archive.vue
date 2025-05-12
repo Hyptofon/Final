@@ -34,16 +34,6 @@
             </svg>
           </div>
         </div>
-        <select
-            v-model="filterStatus"
-            class="px-4 py-2.5 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-        >
-          <option value="all">Всі статуси</option>
-          <option value="active">Активний</option>
-          <option value="pending">На розгляді</option>
-          <option value="completed">Завершений</option>
-          <option value="archived">Архівовано</option>
-        </select>
       </div>
 
       <!-- Сортування -->
@@ -136,36 +126,6 @@
         </div>
       </div>
 
-      <!-- Модальне вікно попереднього перегляду -->
-      <div v-if="previewVisible" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-scaleIn">
-          <div class="px-6 py-4 bg-gradient-to-r from-amber-500 to-amber-600 border-b border-amber-700 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-white">Попередній перегляд оригінального вмісту</h2>
-            <button @click="previewVisible = false" class="text-white hover:text-gray-200">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div class="p-6">
-            <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900 mb-2">{{ previewDocument?.title }}</h3>
-              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-80 overflow-y-auto">
-                <p class="whitespace-pre-wrap">{{ previewContent }}</p>
-              </div>
-            </div>
-            <div class="flex justify-end">
-              <button
-                  @click="previewVisible = false"
-                  class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-              >
-                Закрити
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Таблиця архіву -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
         <div class="overflow-x-auto">
@@ -219,37 +179,7 @@
               </td>
               <td class="px-3 py-4">
                 <div class="text-sm text-gray-500 max-w-xs truncate">
-                  <span>
-                    {{ doc.content }}
-                    <span
-                        v-if="doc.compressed"
-                        class="text-xs text-amber-600 font-medium ml-1 px-1.5 py-0.5 bg-amber-50 rounded-full cursor-help"
-                        :title="`Оригінальний розмір: ${doc.previousState?.originalContentLength || '?'} символів`"
-                    >
-                      <template v-if="doc.previousState?.compressionRatio">
-                        [стиснуто на {{ doc.previousState.compressionRatio }}%]
-                      </template>
-                      <template v-else>
-                        [стиснуто]
-                      </template>
-                    </span>
-                    <button
-                        v-if="doc.compressed && doc.previousState?.content"
-                        @click="showPreview(doc)"
-                        class="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
-                    >
-                      Переглянути оригінал
-                    </button>
-                  </span>
-                </div>
-                <!-- Індикатор стиснення -->
-                <div v-if="doc.compressed && doc.previousState?.compressionRatio" class="mt-1 w-32">
-                  <div class="w-full bg-gray-200 rounded-full h-1.5">
-                    <div
-                        class="bg-amber-500 h-1.5 rounded-full"
-                        :style="{ width: `${100 - (doc.previousState?.compressionRatio || 0)}%` }"
-                    ></div>
-                  </div>
+                  {{ doc.content }}
                 </div>
               </td>
               <td class="px-3 py-4 whitespace-nowrap">
@@ -399,7 +329,6 @@ const {
   documents,
   loadDocuments,
   unarchiveDocument,
-  previewOriginalContent,
   checkAutoArchive,
   cleanupArchive
 } = useDocumentStore()
@@ -445,22 +374,8 @@ function onUnarchiveRequested(id: number) {
   })
 }
 
-// --- Попередній перегляд оригінального вмісту ---
-const previewVisible = ref(false)
-const previewDocument = ref<Document | null>(null)
-const previewContent = ref('')
-
-function showPreview(doc: Document) {
-  previewDocument.value = doc
-  const originalContent = previewOriginalContent(doc.id)
-  previewContent.value = originalContent || doc.content
-  previewVisible.value = true
-}
-
 // --- Фільтрація, сортування, пагінація ---
 const search = ref('')
-const filterStatus = ref<'all' | 'active' | 'pending' | 'completed' | 'archived'>('all')
-
 const sortField = ref<'title' | 'createdAt'>('createdAt')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
@@ -483,13 +398,23 @@ const autoArchiveIntervalId = ref<number | null>(null);
 
 // Call loadDocuments and checkAutoArchive immediately
 loadDocuments();
-checkAutoArchive();
+
+// Initialize checkAutoArchiveEnabled ref with true
+const checkAutoArchiveEnabled = ref(true);
+
+// Call checkAutoArchive only when checkAutoArchiveEnabled is true
+if (checkAutoArchiveEnabled.value) {
+  checkAutoArchive();
+}
 
 onMounted(() => {
   // Set interval only when the component is mounted
   autoArchiveIntervalId.value = window.setInterval(() => {
-    checkAutoArchive();
-    cleanupArchive();
+    // Call checkAutoArchive and cleanupArchive only when checkAutoArchiveEnabled is true
+    if (checkAutoArchiveEnabled.value) {
+      checkAutoArchive();
+      cleanupArchive();
+    }
   }, 3600000); // кожну годину
 });
 
@@ -511,11 +436,6 @@ const filtered = computed(() => {
         d.content.toLowerCase().includes(q)
     )
   }
-
-  if (filterStatus.value !== 'all') {
-    list = list.filter(d => d.status === filterStatus.value)
-  }
-
   return list
 })
 
@@ -554,7 +474,6 @@ function sortBy(field: 'title' | 'createdAt') {
 
 function resetFilters() {
   search.value = ''
-  filterStatus.value = 'all'
   pageSize.value = 10
   sortField.value = 'createdAt'
   sortDirection.value = 'desc'
@@ -569,17 +488,8 @@ function resetFilters() {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-.animate-scaleIn {
-  animation: scaleIn 0.3s ease-out;
-}
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
 }
 </style>
