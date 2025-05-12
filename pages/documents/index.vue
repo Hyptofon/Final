@@ -409,7 +409,7 @@ function shouldShowCompressedLabel(doc: Document): boolean {
   // Перевіряємо, чи документ стиснутий
   if (!doc.compressed) return false;
 
-  // Перевіряємо довжину контенту - якщо більше 100 символів, показуємо мітку
+  // Перевіряємо довжину контенту - якщо понад 100 символів, показуємо мітку
   return doc.content.length > 100 ||
       (doc.previousState?.originalContentLength || 0) > 100;
 }

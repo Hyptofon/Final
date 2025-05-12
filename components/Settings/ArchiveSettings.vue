@@ -64,6 +64,93 @@
         </div>
       </div>
 
+      <!-- Рівень стиснення -->
+      <div v-if="settings.compressContent" class="ml-7 mt-2">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">Рівень стиснення</h3>
+        <div class="flex flex-col space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                type="radio"
+                v-model="settings.compressionLevel"
+                value="light"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            >
+            <span class="text-sm text-gray-700">Легкий (зберігає ~70% тексту)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                type="radio"
+                v-model="settings.compressionLevel"
+                value="medium"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            >
+            <span class="text-sm text-gray-700">Середній (зберігає ~50% тексту)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                type="radio"
+                v-model="settings.compressionLevel"
+                value="high"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            >
+            <span class="text-sm text-gray-700">Сильний (зберігає ~30% тексту)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Поріг стиснення -->
+      <div v-if="settings.compressContent" class="ml-7">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">Стискати тексти довші за</h3>
+        <div class="flex items-center gap-3">
+          <input
+              type="number"
+              v-model.number="settings.compressionThreshold"
+              min="50"
+              max="1000"
+              step="10"
+              class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          >
+          <span class="text-gray-600">символів</span>
+        </div>
+      </div>
+
+      <!-- Демонстрація стиснення -->
+      <div v-if="settings.compressContent" class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">Демонстрація стиснення</h3>
+        <div class="mb-3">
+          <div class="text-xs text-gray-500 mb-1">Оригінальний текст ({{ demoText.length }} символів):</div>
+          <div class="text-sm bg-white p-2 rounded border border-gray-200 max-h-20 overflow-y-auto">
+            {{ demoText }}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 mb-1 flex justify-between">
+            <span>Стиснутий текст ({{ compressedDemoText.length }} символів):</span>
+            <span class="text-amber-600 font-medium">
+              Стиснуто на {{ compressionRatio }}%
+            </span>
+          </div>
+          <div class="text-sm bg-white p-2 rounded border border-gray-200 max-h-20 overflow-y-auto">
+            {{ compressedDemoText }}
+          </div>
+        </div>
+
+        <!-- Індикатор стиснення -->
+        <div class="mt-3">
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+                class="bg-amber-500 h-2.5 rounded-full"
+                :style="{ width: `${100 - compressionRatio}%` }"
+            ></div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>0%</span>
+            <span>Ефективність стиснення</span>
+            <span>100%</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Кнопки дій -->
       <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
         <button
@@ -84,8 +171,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, ref } from 'vue'
-import { useDocumentStore, type ArchiveSettings } from '~/composables/useDocumentStore'
+import { reactive, onMounted, ref, computed } from 'vue'
+import { useDocumentStore, type ArchiveSettings, type CompressionLevel } from '~/composables/useDocumentStore'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
@@ -96,7 +183,9 @@ const settings = reactive<ArchiveSettings>({
   autoArchiveEnabled: archiveSettings.autoArchiveEnabled,
   autoArchiveDays: archiveSettings.autoArchiveDays,
   archiveCompletedDocs: archiveSettings.archiveCompletedDocs,
-  compressContent: archiveSettings.compressContent
+  compressContent: archiveSettings.compressContent,
+  compressionLevel: archiveSettings.compressionLevel || "medium",
+  compressionThreshold: archiveSettings.compressionThreshold || 100
 })
 
 const isMounted = ref(false);
@@ -104,16 +193,116 @@ const initialSettings = ref<ArchiveSettings>({
   autoArchiveEnabled: false,
   autoArchiveDays: 30,
   archiveCompletedDocs: false,
-  compressContent: false
+  compressContent: false,
+  compressionLevel: "medium",
+  compressionThreshold: 100
+});
+
+// Демонстраційний текст для прикладу стиснення
+const demoText = ref(`Цей текст демонструє, як працює стиснення вмісту документів при архівуванні. Залежно від обраного рівня стиснення, буде збережено різну кількість тексту. Легкий рівень зберігає більшу частину тексту, середній - приблизно половину, а сильний - лише найважливішу інформацію на початку. Це дозволяє значно зменшити розмір архівованих документів, зберігаючи при цьому можливість розуміння їх змісту без повного розархівування.`);
+
+// Функція для стискання демонстраційного тексту
+function compressDemo(text: string, level: CompressionLevel, threshold: number): {
+  compressedText: string,
+  ratio: number
+} {
+  const originalLength = text.length;
+
+  // Якщо текст коротший за поріг, повертаємо його без змін
+  if (originalLength <= threshold) {
+    return { compressedText: text, ratio: 0 };
+  }
+
+  let compressedText = "";
+  let keepLength = 0;
+
+  // Визначаємо скільки символів зберігати в залежності від рівня стиснення
+  switch (level) {
+    case "light":
+      // Легке стиснення - зберігаємо 70% початку і додаємо "..."
+      keepLength = Math.floor(originalLength * 0.7);
+      compressedText = text.substring(0, keepLength) + "...";
+      break;
+    case "medium":
+      // Середнє стиснення - зберігаємо початок і кінець, загалом 50%
+      const mediumKeepStart = Math.floor(originalLength * 0.35);
+      const mediumKeepEnd = Math.floor(originalLength * 0.15);
+      compressedText =
+          text.substring(0, mediumKeepStart) +
+          "..." +
+          text.substring(originalLength - mediumKeepEnd);
+      break;
+    case "high":
+      // Сильне стиснення - зберігаємо 30% початку і додаємо "..."
+      keepLength = Math.floor(originalLength * 0.3);
+      compressedText = text.substring(0, keepLength) + "...";
+      break;
+    default:
+      // За замовчуванням - середнє стиснення
+      keepLength = Math.floor(originalLength * 0.5);
+      compressedText = text.substring(0, keepLength) + "...";
+  }
+
+  // Обчислюємо відсоток стиснення
+  const ratio = Math.round(
+      ((originalLength - compressedText.length) / originalLength) * 100
+  );
+
+  return { compressedText, ratio };
+}
+
+// Обчислюємо стиснутий демо-текст на основі поточних налаштувань
+const compressedDemoText = computed(() => {
+  const result = compressDemo(
+      demoText.value,
+      settings.compressionLevel,
+      settings.compressionThreshold
+  );
+  return result.compressedText;
+});
+
+// Обчислюємо відсоток стиснення
+const compressionRatio = computed(() => {
+  const result = compressDemo(
+      demoText.value,
+      settings.compressionLevel,
+      settings.compressionThreshold
+  );
+  return result.ratio;
 });
 
 onMounted(() => {
   isMounted.value = true;
-  initialSettings.value = { ...archiveSettings };
-  settings.autoArchiveEnabled = archiveSettings.autoArchiveEnabled;
-  settings.autoArchiveDays = archiveSettings.autoArchiveDays;
-  settings.archiveCompletedDocs = archiveSettings.archiveCompletedDocs;
-  settings.compressContent = archiveSettings.compressContent;
+
+  // Initialize initialSettings with default values
+  initialSettings.value = {
+    autoArchiveEnabled: false,
+    autoArchiveDays: 30,
+    archiveCompletedDocs: false,
+    compressContent: false,
+    compressionLevel: "medium",
+    compressionThreshold: 100
+  };
+
+  // Override with values from archiveSettings if they exist
+  if (archiveSettings) {
+    initialSettings.value = {
+      autoArchiveEnabled: archiveSettings.autoArchiveEnabled,
+      autoArchiveDays: archiveSettings.autoArchiveDays,
+      archiveCompletedDocs: archiveSettings.archiveCompletedDocs,
+      compressContent: archiveSettings.compressContent,
+      compressionLevel: archiveSettings.compressionLevel || "medium",
+      compressionThreshold: archiveSettings.compressionThreshold || 100
+    };
+  }
+
+  // Копіюємо налаштування з store
+  settings.autoArchiveEnabled = initialSettings.value.autoArchiveEnabled;
+  settings.autoArchiveDays = initialSettings.value.autoArchiveDays;
+  settings.archiveCompletedDocs = initialSettings.value.archiveCompletedDocs;
+  settings.compressContent = initialSettings.value.compressContent;
+  settings.compressionLevel = initialSettings.value.compressionLevel;
+  settings.compressionThreshold = initialSettings.value.compressionThreshold;
 })
 
 // Збереження налаштувань
@@ -122,17 +311,21 @@ function saveSettings() {
     autoArchiveEnabled: settings.autoArchiveEnabled,
     autoArchiveDays: settings.autoArchiveDays,
     archiveCompletedDocs: settings.archiveCompletedDocs,
-    compressContent: settings.compressContent
+    compressContent: settings.compressContent,
+    compressionLevel: settings.compressionLevel,
+    compressionThreshold: settings.compressionThreshold
   })
   toast.success('Налаштування архівування збережено')
 }
-
+//123 test
 // Скидання до стандартних налаштувань
 function resetToDefaults() {
   settings.autoArchiveEnabled = initialSettings.value.autoArchiveEnabled;
   settings.autoArchiveDays = initialSettings.value.autoArchiveDays;
   settings.archiveCompletedDocs = initialSettings.value.archiveCompletedDocs;
   settings.compressContent = initialSettings.value.compressContent;
+  settings.compressionLevel = initialSettings.value.compressionLevel;
+  settings.compressionThreshold = initialSettings.value.compressionThreshold;
   toast.info('Налаштування скинуто до стандартних')
 }
 </script>

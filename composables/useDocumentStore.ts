@@ -13,7 +13,8 @@ interface DocumentPreviousState {
     isDeleted: boolean
     archivedAt: string | null
     compressed: boolean
-    originalContentLength?: number // Додаємо опціональне поле для довжини оригінального контенту
+    originalContentLength?: number // Довжина оригінального контенту
+    compressionRatio?: number // Відсоток стиснення
 }
 
 export interface Document {
@@ -34,12 +35,17 @@ export interface Document {
     }[]
 }
 
+// Тип рівня стиснення
+export type CompressionLevel = "light" | "medium" | "high"
+
 // Налаштування архівування за замовчуванням
 export interface ArchiveSettings {
     autoArchiveEnabled: boolean
     autoArchiveDays: number
     archiveCompletedDocs: boolean
     compressContent: boolean
+    compressionLevel: CompressionLevel // Додаємо рівень стиснення
+    compressionThreshold: number // Поріг стиснення (кількість символів)
 }
 
 export function useDocumentStore() {
@@ -51,6 +57,8 @@ export function useDocumentStore() {
         autoArchiveDays: 30,
         archiveCompletedDocs: true,
         compressContent: true,
+        compressionLevel: "medium", // Середній рівень стиснення за замовчуванням
+        compressionThreshold: 100, // Стискати тексти довші за 100 символів
     })
 
     // Завантаження налаштувань архівування
@@ -66,6 +74,9 @@ export function useDocumentStore() {
                 if (parsed.archiveCompletedDocs !== undefined)
                     archiveSettings.archiveCompletedDocs = parsed.archiveCompletedDocs
                 if (parsed.compressContent !== undefined) archiveSettings.compressContent = parsed.compressContent
+                if (parsed.compressionLevel !== undefined) archiveSettings.compressionLevel = parsed.compressionLevel
+                if (parsed.compressionThreshold !== undefined)
+                    archiveSettings.compressionThreshold = parsed.compressionThreshold
             } catch (e) {
                 console.error("Error loading archive settings:", e)
             }
@@ -296,6 +307,58 @@ export function useDocumentStore() {
         documents.value.push(newDoc)
     }
 
+    // Функція для стискання вмісту з різними рівнями стиснення
+    function compressContent(
+        content: string,
+        level: CompressionLevel,
+    ): {
+        compressedContent: string
+        compressionRatio: number
+    } {
+        const originalLength = content.length
+
+        // Якщо контент коротший за поріг стиснення, повертаємо його без змін
+        if (originalLength <= archiveSettings.compressionThreshold) {
+            return {
+                compressedContent: content,
+                compressionRatio: 0,
+            }
+        }
+
+        let compressedContent = ""
+        let keepLength = 0
+
+        // Визначаємо скільки символів зберігати в залежності від рівня стиснення
+        switch (level) {
+            case "light":
+                // Легке стиснення - зберігаємо 70% початку і додаємо "..."
+                keepLength = Math.floor(originalLength * 0.7)
+                compressedContent = content.substring(0, keepLength) + "..."
+                break
+            case "medium":
+                // Середнє стиснення - зберігаємо початок і кінець, загалом 50%
+                const mediumKeepStart = Math.floor(originalLength * 0.35)
+                const mediumKeepEnd = Math.floor(originalLength * 0.15)
+                compressedContent =
+                    content.substring(0, mediumKeepStart) + "..." + content.substring(originalLength - mediumKeepEnd)
+                break
+            case "high":
+                // Сильне стиснення - зберігаємо 30% початку і додаємо "..."
+                keepLength = Math.floor(originalLength * 0.3)
+                compressedContent = content.substring(0, keepLength) + "..."
+                break
+            default:
+                // За замовчуванням - середнє стиснення
+                keepLength = Math.floor(originalLength * 0.5)
+                compressedContent = content.substring(0, keepLength) + "..."
+        }
+
+        // Обчислюємо відсоток стиснення
+        const compressionRatio = Math.round(((originalLength - compressedContent.length) / originalLength) * 100)
+
+        return { compressedContent, compressionRatio }
+    }
+
     // Archive a document
     function archiveDocument(id: number) {
         const idx = documents.value.findIndex((d) => d.id === id)
@@ -315,11 +378,15 @@ export function useDocumentStore() {
         // Стискання вмісту, якщо увімкнено в налаштуваннях
         let isCompressed = false
         let compressedContent = doc.content
+        let compressionRatio = 0
         const originalLength = doc.content.length
 
-        if (archiveSettings.compressContent && doc.content.length > 100) {
-            compressedContent = doc.content.substring(0, 100) + "..."
-            isCompressed = true
+        if (archiveSettings.compressContent && originalLength > archiveSettings.compressionThreshold) {
+            const compressionResult = compressContent(doc.content, archiveSettings.compressionLevel)
+
+            compressedContent = compressionResult.compressedContent
+            compressionRatio = compressionResult.compressionRatio
+            isCompressed = compressionRatio > 0
         }
 
         // Оновлення документа з правильним прапором compressed та зміна статусу на 'archived'
@@ -333,8 +400,9 @@ export function useDocumentStore() {
             updatedAt: new Date().toISOString(),
             previousState: {
                 ...currentState,
-                originalContentLength: originalLength, // Тепер це поле визначено в типі
+                originalContentLength: originalLength,
                 content: doc.content, // Зберігаємо оригінальний контент
+                compressionRatio: compressionRatio, // Зберігаємо відсоток стиснення
             },
         }
     }
@@ -377,6 +445,16 @@ export function useDocumentStore() {
         }
 
         documents.value[idx] = restored
+    }
+
+    // Функція для попереднього перегляду оригінального вмісту без розархівування
+    function previewOriginalContent(id: number): string | null {
+        const doc = documents.value.find((d) => d.id === id)
+        if (!doc || !doc.isArchived || !doc.compressed || !doc.previousState?.content) {
+            return null
+        }
+
+        return doc.previousState.content
     }
 
     // Check for documents that should be auto-archived
@@ -427,6 +505,7 @@ export function useDocumentStore() {
         addDocument,
         archiveDocument,
         unarchiveDocument,
+        previewOriginalContent,
         checkAutoArchive,
         cleanupArchive,
         updateArchiveSettings,
