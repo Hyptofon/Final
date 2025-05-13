@@ -1,6 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 //import { getIconCollections } from '@egoist/tailwindcss-icons'
 export default defineNuxtConfig({
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    }
+  },
+
   runtimeConfig: {
     public: {
       apiBase: 'https://umsystem-documents.azurewebsites.net/', // can be overridden by NUXT_PUBLIC_API_BASE environment variable

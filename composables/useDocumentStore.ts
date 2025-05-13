@@ -347,7 +347,7 @@ export function useDocumentStore() {
         }
 
         documents.value[idx] = restored
-        // 5️⃣ Якщо знадобиться відновити на сервері (PUT)
+        // Якщо знадобиться відновити на сервері (PUT)
         // fetch(`/swagger/v1/documents/${id}`, {
         //   method: 'PUT',
         //   headers: { 'Content-Type': 'multipart/form-data' },
